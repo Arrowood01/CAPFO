@@ -2,10 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
+// Type definitions for sheet data
+type RawRowData = (string | number | null)[];
+type RawSheetData = RawRowData[];
+
 interface ColumnMapperProps {
-  dataPreview: any[][]; // First 5 rows of data (original rows 10-14)
-  allUploadedData: any[][]; // All data from row 10 onwards
-  onMappingConfirm: (mappings: Record<number, string>, allData: any[][]) => void;
+  dataPreview: RawSheetData; // First 5 rows of data (original rows 10-14)
+  allUploadedData: RawSheetData; // All data from row 10 onwards
+  onMappingConfirm: (mappings: Record<number, string>, allData: RawSheetData) => void;
   onReset: () => void;
 }
 

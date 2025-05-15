@@ -13,11 +13,6 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
   }
 };
 
-interface Settings {
-  id: number; // Assuming there's an id, though we fetch the single row
-  inflation_rate: number;
-}
-
 interface Community {
   id: string; // Assuming UUID or similar from Supabase
   name: string;
@@ -82,9 +77,13 @@ const SettingsPage = () => {
         setInitialInflationRate(0);
         showToast('No global inflation rate found. Please set one.', 'error');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching inflation rate:', error);
-      showToast(`Error fetching inflation rate: ${error.message}`, 'error');
+      if (error instanceof Error) {
+        showToast(`Error fetching inflation rate: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while fetching inflation rate.', 'error');
+      }
       setInflationRate(0); // Default on error
       setInitialInflationRate(0);
     } finally {
@@ -142,9 +141,13 @@ const SettingsPage = () => {
       if (error) throw error;
       setInitialInflationRate(rateValue); // Update initial rate on successful save
       showToast('Inflation rate updated successfully!', 'success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating inflation rate:', error);
-      showToast(`Error updating inflation rate: ${error.message}`, 'error');
+      if (error instanceof Error) {
+        showToast(`Error updating inflation rate: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while updating inflation rate.', 'error');
+      }
       setInflationRate(initialInflationRate ?? 0); // Revert on error
     } finally {
       setLoadingInflation(false);
@@ -159,8 +162,12 @@ const SettingsPage = () => {
       const { data, error } = await supabase.from('communities').select('*').order('name');
       if (error) throw error;
       setCommunities(data || []);
-    } catch (error: any) {
-      showToast(`Error fetching communities: ${error.message}`, 'error');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        showToast(`Error fetching communities: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while fetching communities.', 'error');
+      }
     } finally {
       setLoadingCommunities(false);
     }
@@ -187,8 +194,12 @@ const SettingsPage = () => {
         setNewCommunityName('');
         showToast('Community added successfully!', 'success');
       }
-    } catch (error: any) {
-      showToast(`Error adding community: ${error.message}`, 'error');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        showToast(`Error adding community: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while adding community.', 'error');
+      }
     }
   };
 
@@ -211,8 +222,12 @@ const SettingsPage = () => {
       setCommunities(communities.map(c => c.id === id ? { ...c, name: editingCommunityName.trim() } : c));
       setEditingCommunityId(null);
       showToast('Community updated successfully!', 'success');
-    } catch (error: any) {
-      showToast(`Error updating community: ${error.message}`, 'error');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        showToast(`Error updating community: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while updating community.', 'error');
+      }
     }
   };
 
@@ -223,8 +238,12 @@ const SettingsPage = () => {
         if (error) throw error;
         setCommunities(communities.filter(c => c.id !== id));
         showToast('Community deleted successfully!', 'success');
-      } catch (error: any) {
-        showToast(`Error deleting community: ${error.message}`, 'error');
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          showToast(`Error deleting community: ${error.message}`, 'error');
+        } else {
+          showToast('An unexpected error occurred while deleting community.', 'error');
+        }
       }
     }
   };
@@ -237,8 +256,12 @@ const SettingsPage = () => {
       const { data, error } = await supabase.from('asset_categories').select('*').order('name');
       if (error) throw error;
       setAssetCategories(data || []);
-    } catch (error: any) {
-      showToast(`Error fetching asset categories: ${error.message}`, 'error');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        showToast(`Error fetching asset categories: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while fetching asset categories.', 'error');
+      }
     } finally {
       setLoadingCategories(false);
     }
@@ -287,8 +310,12 @@ const SettingsPage = () => {
         setNewCategory({ name: '', lifespan_years: '', avg_replacement_cost: '' }); // Reset with empty strings
         showToast('Asset category added successfully!', 'success');
       }
-    } catch (error: any) {
-      showToast(`Error adding asset category: ${error.message}`, 'error');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        showToast(`Error adding asset category: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while adding asset category.', 'error');
+      }
     }
   };
 
@@ -340,8 +367,12 @@ const SettingsPage = () => {
       setEditingCategoryId(null);
       setEditingCategory({});
       showToast('Asset category updated successfully!', 'success');
-    } catch (error: any) {
-      showToast(`Error updating asset category: ${error.message}`, 'error');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        showToast(`Error updating asset category: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while updating asset category.', 'error');
+      }
     }
   };
 
@@ -352,8 +383,12 @@ const SettingsPage = () => {
         if (error) throw error;
         setAssetCategories(assetCategories.filter(cat => cat.id !== id));
         showToast('Asset category deleted successfully!', 'success');
-      } catch (error: any) {
-        showToast(`Error deleting asset category: ${error.message}`, 'error');
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          showToast(`Error deleting asset category: ${error.message}`, 'error');
+        } else {
+          showToast('An unexpected error occurred while deleting asset category.', 'error');
+        }
       }
     }
   };

@@ -2,8 +2,14 @@
 
 import React from 'react';
 
+// Assuming TransformedSheetData is defined elsewhere (e.g., in a types file or passed down)
+// For now, let's define it here if not already globally available.
+// If it's in types.ts or similar: import { TransformedSheetData } from '@/types';
+type TransformedRow = Record<string, string | number | null>;
+type TransformedSheetData = TransformedRow[];
+
 interface TransformedDataPreviewProps {
-  transformedData: Record<string, any>[];
+  transformedData: TransformedSheetData;
   onStartOver: () => void;
   communityId: string; // Added
   categoryId: string;  // Added

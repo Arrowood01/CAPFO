@@ -6,6 +6,12 @@ import ColumnMapper from '@/components/import/ColumnMapper';
 import TransformedDataPreview from '@/components/import/TransformedDataPreview';
 import { supabase } from '@/lib/supabaseClient'; // Corrected path
 
+// Type definitions for sheet data
+type RawRowData = (string | number | null)[];
+type RawSheetData = RawRowData[];
+type TransformedRow = Record<string, string | number | null>;
+type TransformedSheetData = TransformedRow[];
+
 type ImportStep = 'upload' | 'map' | 'preview' | 'assign'; // Added 'assign' step
 
 interface Community {
@@ -22,9 +28,9 @@ interface Category {
 
 // Utility function to transform data based on mappings
 const transformData = (
-  data: any[][],
+  data: RawSheetData,
   mappings: Record<number, string>
-): Record<string, any>[] => {
+): TransformedSheetData => {
   const outputKeys: Record<string, string> = {
     'Make': 'make',
     'Model': 'model',
@@ -34,7 +40,7 @@ const transformData = (
   };
 
   return data.map((row) => {
-    const transformedRow: Record<string, any> = {};
+    const transformedRow: TransformedRow = {};
     for (const colIndexStr in mappings) {
       const colIndex = parseInt(colIndexStr, 10);
       const mappingKey = mappings[colIndex]; // e.g., "Make"
@@ -56,8 +62,8 @@ const transformData = (
 
 
 const ImportPage = (): React.JSX.Element => {
-  const [rawSheetData, setRawSheetData] = useState<any[][] | null>(null);
-  const [transformedData, setTransformedData] = useState<Record<string, any>[] | null>(null);
+  const [rawSheetData, setRawSheetData] = useState<RawSheetData | null>(null);
+  const [transformedData, setTransformedData] = useState<TransformedSheetData | null>(null);
   const [currentStep, setCurrentStep] = useState<ImportStep>('upload');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -86,14 +92,14 @@ const ImportPage = (): React.JSX.Element => {
     fetchData();
   }, []);
 
-  const handleFileProcessed = useCallback((data: any[][]) => {
+  const handleFileProcessed = useCallback((data: RawSheetData) => {
     setRawSheetData(data);
     setTransformedData(null); // Clear previous transformed data
     setCurrentStep('map');
   }, []);
 
   const handleMappingConfirm = useCallback(
-    (mappings: Record<number, string>, allData: any[][]) => {
+    (mappings: Record<number, string>, allData: RawSheetData) => {
       const transformed = transformData(allData, mappings);
       setTransformedData(transformed);
       setCurrentStep('assign'); // Change to 'assign' step after mapping

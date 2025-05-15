@@ -3,8 +3,12 @@
 import React, { useState, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 
+// Type definitions for sheet data
+type RawRowData = (string | number | null)[];
+type RawSheetData = RawRowData[];
+
 interface FileUploadProps {
-  onFileProcessed: (data: any[][]) => void;
+  onFileProcessed: (data: RawSheetData) => void;
   onReset: () => void;
 }
 
@@ -43,10 +47,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onReset }) => 
           const worksheet = workbook.Sheets[firstSheetName];
           
           // Parse sheet to array of arrays, skipping first 9 rows
-          const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
+          const jsonData: RawSheetData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             range: 9, // Start reading from the 10th row (0-indexed 9)
-          });
+          }) as RawSheetData; // Cast to ensure type compatibility
 
           if (jsonData.length === 0) {
             setError('The uploaded file is empty or has no data starting from row 10.');

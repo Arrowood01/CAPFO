@@ -16,9 +16,7 @@ interface DashboardAsset {
   install_date?: string;
   description?: string; // For asset name
   purchase_price?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   category: Array<{ id: string; name: string; lifespan: number }>; // Expect an array
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   community: Array<{ id: string; name: string }>; // Expect an array
 }
 
@@ -209,7 +207,7 @@ const DashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [forecastRange, selectedCommunities, selectedCategory, selectedStatus, inflationRate]);
+  }, [forecastRange, selectedCommunities, selectedCategory, inflationRate]); // Removed selectedStatus
 
   useEffect(() => {
     runForecast();

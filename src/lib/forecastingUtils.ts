@@ -48,12 +48,12 @@ export const calculateFutureAssetCosts = (
 
     // Only include assets whose replacement falls within the forecast range
     if (replacementYear >= currentYear && replacementYear <= endForecastYear) {
-      const yearsToReplacement = replacementYear - currentYear;
+      // const yearsToReplacement = replacementYear - currentYear; // Unused
       
       // Simplified inflation calculation: Cost_future = Cost_present * (1 + r)^n
       // A more precise calculation would compound inflation from purchase to replacement.
       // For this, we'll calculate inflation from purchase year to replacement year.
-      const yearsSincePurchaseToReplacement = replacementYear - installYear; // This is actually just lifespan
+      // const yearsSincePurchaseToReplacement = replacementYear - installYear; // Unused, and is equivalent to asset.category.lifespan
       
       // Calculate inflated cost from original purchase price to the replacement year
       let inflatedCost = asset.purchase_price;
