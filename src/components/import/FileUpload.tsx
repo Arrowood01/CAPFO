@@ -116,7 +116,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onReset }) => 
 
       {fileName && !error && (
         <p className="mb-4 text-sm text-green-600">
-          File "{fileName}" selected. Ready for mapping.
+          File &quot;{fileName}&quot; selected. Ready for mapping.
         </p>
       )}
       
