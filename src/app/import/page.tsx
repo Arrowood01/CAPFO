@@ -61,7 +61,7 @@ const transformData = (
 };
 
 
-const ImportPage = (): React.JSX.Element => {
+const ImportPage = () => {
   const [rawSheetData, setRawSheetData] = useState<RawSheetData | null>(null);
   const [transformedData, setTransformedData] = useState<TransformedSheetData | null>(null);
   const [currentStep, setCurrentStep] = useState<ImportStep>('upload');

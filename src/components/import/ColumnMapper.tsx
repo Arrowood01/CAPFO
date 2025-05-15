@@ -30,7 +30,7 @@ const ColumnMapper = ({
   allUploadedData,
   onMappingConfirm,
   onReset,
-}: ColumnMapperProps): JSX.Element => {
+}: ColumnMapperProps) => {
   const [mappings, setMappings] = useState<Record<number, string>>({});
   const [validationError, setValidationError] = useState<string | null>(null);
 

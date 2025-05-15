@@ -22,7 +22,7 @@ const TransformedDataPreview = ({
   communityId,
   categoryId,
   onImport
-}: TransformedDataPreviewProps): React.JSX.Element => {
+}: TransformedDataPreviewProps) => {
   const [isImporting, setIsImporting] = React.useState(false);
 
   if (!transformedData || transformedData.length === 0) {
