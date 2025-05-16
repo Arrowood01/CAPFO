@@ -22,8 +22,8 @@ interface Community {
 interface AssetCategory {
   id: string; // Assuming UUID or similar
   name: string;
-  lifespan_years: number;
-  avg_replacement_cost: number;
+  lifespan: number; // Matches DB
+  avg_replacement_cost: number; // Matches DB (after you add it)
   // user_id: string; // If categories are user-specific
 }
 
@@ -31,14 +31,14 @@ interface AssetCategory {
 interface AssetCategoryFormState {
   id?: string;
   name?: string;
-  lifespan_years?: string | number; // Allow string for input, convert to number on save
-  avg_replacement_cost?: string | number; // Allow string for input, convert to number on save
+  lifespan_years?: string | number; // Form uses lifespan_years, will map to DB 'lifespan'
+  avg_replacement_cost?: string | number;
 }
 
 const SettingsPage = () => {
   const [inflationRate, setInflationRate] = useState<number | string>('');
   const [initialInflationRate, setInitialInflationRate] = useState<number | null>(null);
-  const [settingsId, setSettingsId] = useState<number | null>(null);
+  const [settingsId, setSettingsId] = useState<string | null>(null); // DB ID is UUID (string)
   const [loadingInflation, setLoadingInflation] = useState(true);
 
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -60,22 +60,27 @@ const SettingsPage = () => {
     try {
       const { data, error } = await supabase
         .from('settings')
-        .select('id, inflation_rate')
-        .limit(1) // Assuming a single row for global settings
-        .single(); // Use .single() if you expect exactly one row or null
+        .select('id, value') // Select 'value' which holds the rate
+        .eq('key', 'inflation_rate') // Filter for the 'inflation_rate' key
+        .limit(1)
+        .single();
 
-      if (error) throw error;
+      // PGRST116: "Searched item was not found" - this is okay if settings row doesn't exist yet
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
 
       if (data) {
-        setInflationRate(data.inflation_rate * 100); // Store as percentage
-        setInitialInflationRate(data.inflation_rate * 100);
+        const rate = parseFloat(data.value);
+        setInflationRate(isNaN(rate) ? 0 : rate * 100);
+        setInitialInflationRate(isNaN(rate) ? 0 : rate * 100);
         setSettingsId(data.id);
       } else {
-        // Handle case where no settings row exists yet, maybe create one?
-        // For now, assume it exists or allow creating it.
-        setInflationRate(0); // Default if no setting found
+        setInflationRate(0);
         setInitialInflationRate(0);
-        showToast('No global inflation rate found. Please set one.', 'error');
+        setSettingsId(null);
+        console.log('No global inflation rate setting found in DB. User can create one.');
+        // showToast('No global inflation rate found. Please set one.', 'error'); // Optional: prompt user
       }
     } catch (error: unknown) {
       console.error('Error fetching inflation rate:', error);
@@ -84,8 +89,9 @@ const SettingsPage = () => {
       } else {
         showToast('An unexpected error occurred while fetching inflation rate.', 'error');
       }
-      setInflationRate(0); // Default on error
+      setInflationRate(0);
       setInitialInflationRate(0);
+      setSettingsId(null);
     } finally {
       setLoadingInflation(false);
     }
@@ -97,58 +103,48 @@ const SettingsPage = () => {
 
   const handleInflationRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setInflationRate(value); // Keep as string for input, convert on save
+    setInflationRate(value);
   };
 
   const updateInflationRate = async () => {
     const rateValue = parseFloat(String(inflationRate));
     if (isNaN(rateValue) || rateValue < 0) {
       showToast('Inflation rate must be a non-negative number.', 'error');
-      setInflationRate(initialInflationRate ?? 0); // Revert to initial or 0
+      setInflationRate(initialInflationRate ?? 0);
       return;
-    }
-
-    if (settingsId === null) {
-        showToast('Settings ID not found. Cannot update.', 'error');
-        // Potentially, try to insert a new settings row if none exists
-        // For now, we assume an update to an existing row.
-        // Or, if you want to create if not exists:
-        /*
-        const { data, error } = await supabase
-            .from('settings')
-            .insert([{ inflation_rate: rateValue / 100 }]) // Assuming 'id' is auto-generated
-            .select()
-            .single();
-        if (error) {
-            showToast(`Error creating inflation rate: ${error.message}`, 'error');
-        } else if (data) {
-            setSettingsId(data.id);
-            setInitialInflationRate(rateValue);
-            showToast('Inflation rate created successfully!', 'success');
-        }
-        return;
-        */
-       return;
     }
 
     setLoadingInflation(true);
     try {
-      const { error } = await supabase
-        .from('settings')
-        .update({ inflation_rate: rateValue / 100 }) // Store as decimal
-        .eq('id', settingsId);
-
-      if (error) throw error;
-      setInitialInflationRate(rateValue); // Update initial rate on successful save
-      showToast('Inflation rate updated successfully!', 'success');
-    } catch (error: unknown) {
-      console.error('Error updating inflation rate:', error);
-      if (error instanceof Error) {
-        showToast(`Error updating inflation rate: ${error.message}`, 'error');
-      } else {
-        showToast('An unexpected error occurred while updating inflation rate.', 'error');
+      if (settingsId) { // If ID exists, update
+        const { error: updateError } = await supabase
+          .from('settings')
+          .update({ value: (rateValue / 100).toString() })
+          .eq('id', settingsId);
+        if (updateError) throw updateError;
+        setInitialInflationRate(rateValue);
+        showToast('Inflation rate updated successfully!', 'success');
+      } else { // No ID, so try to insert
+        const { data: insertData, error: insertError } = await supabase
+          .from('settings')
+          .insert({ key: 'inflation_rate', value: (rateValue / 100).toString() })
+          .select('id')
+          .single();
+        if (insertError) throw insertError;
+        if (insertData) {
+          setSettingsId(insertData.id);
+          setInitialInflationRate(rateValue);
+          showToast('Inflation rate created successfully!', 'success');
+        }
       }
-      setInflationRate(initialInflationRate ?? 0); // Revert on error
+    } catch (error: unknown) {
+      console.error('Error saving inflation rate:', error);
+      if (error instanceof Error) {
+        showToast(`Error saving inflation rate: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while saving inflation rate.', 'error');
+      }
+      setInflationRate(initialInflationRate ?? 0);
     } finally {
       setLoadingInflation(false);
     }
@@ -163,6 +159,7 @@ const SettingsPage = () => {
       if (error) throw error;
       setCommunities(data || []);
     } catch (error: unknown) {
+      console.error('Error fetching communities:', error);
       if (error instanceof Error) {
         showToast(`Error fetching communities: ${error.message}`, 'error');
       } else {
@@ -182,6 +179,10 @@ const SettingsPage = () => {
       showToast('Community name cannot be empty.', 'error');
       return;
     }
+    const sessionData = await supabase.auth.getSession();
+    console.log('Current user session for add community:', sessionData);
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current user for add community:', user);
     try {
       const { data, error } = await supabase
         .from('communities')
@@ -195,6 +196,7 @@ const SettingsPage = () => {
         showToast('Community added successfully!', 'success');
       }
     } catch (error: unknown) {
+      console.error('Error adding community:', error);
       if (error instanceof Error) {
         showToast(`Error adding community: ${error.message}`, 'error');
       } else {
@@ -223,6 +225,7 @@ const SettingsPage = () => {
       setEditingCommunityId(null);
       showToast('Community updated successfully!', 'success');
     } catch (error: unknown) {
+      console.error('Error updating community:', error);
       if (error instanceof Error) {
         showToast(`Error updating community: ${error.message}`, 'error');
       } else {
@@ -239,6 +242,7 @@ const SettingsPage = () => {
         setCommunities(communities.filter(c => c.id !== id));
         showToast('Community deleted successfully!', 'success');
       } catch (error: unknown) {
+        console.error('Error deleting community:', error);
         if (error instanceof Error) {
           showToast(`Error deleting community: ${error.message}`, 'error');
         } else {
@@ -253,10 +257,11 @@ const SettingsPage = () => {
   const fetchAssetCategories = useCallback(async () => {
     setLoadingCategories(true);
     try {
-      const { data, error } = await supabase.from('asset_categories').select('*').order('name');
+      const { data, error } = await supabase.from('categories').select('*').order('name');
       if (error) throw error;
       setAssetCategories(data || []);
     } catch (error: unknown) {
+      console.error('Error fetching asset categories:', error);
       if (error instanceof Error) {
         showToast(`Error fetching asset categories: ${error.message}`, 'error');
       } else {
@@ -286,31 +291,38 @@ const SettingsPage = () => {
       return;
     }
 
-    const lifespan_years = parseFloat(lifespanStr);
-    const avg_replacement_cost = parseFloat(costStr);
+    const lifespan_val = parseFloat(lifespanStr);
+    const avg_replacement_cost_val = parseFloat(costStr);
 
-    if (isNaN(lifespan_years) || lifespan_years <= 0 || isNaN(avg_replacement_cost) || avg_replacement_cost <= 0) {
-      showToast('Lifespan and cost must be valid positive numbers.', 'error');
+    if (isNaN(lifespan_val) || lifespan_val <= 0 || isNaN(avg_replacement_cost_val) || avg_replacement_cost_val < 0) {
+      showToast('Lifespan must be a positive number. Cost must be a non-negative number.', 'error');
       return;
     }
 
     try {
       const { data, error } = await supabase
-        .from('asset_categories')
+        .from('categories')
         .insert([{
           name: name,
-          lifespan_years: lifespan_years,
-          avg_replacement_cost: avg_replacement_cost,
+          lifespan: lifespan_val, // Map form's lifespan_years to DB 'lifespan'
+          avg_replacement_cost: avg_replacement_cost_val,
         }])
         .select()
         .single();
       if (error) throw error;
       if (data) {
-        setAssetCategories([...assetCategories, data]);
-        setNewCategory({ name: '', lifespan_years: '', avg_replacement_cost: '' }); // Reset with empty strings
+         const newCatData: AssetCategory = { // Ensure type consistency
+            id: data.id,
+            name: data.name,
+            lifespan: data.lifespan,
+            avg_replacement_cost: data.avg_replacement_cost
+        };
+        setAssetCategories([...assetCategories, newCatData]);
+        setNewCategory({ name: '', lifespan_years: '', avg_replacement_cost: '' });
         showToast('Asset category added successfully!', 'success');
       }
     } catch (error: unknown) {
+      console.error('Error adding asset category:', error);
       if (error instanceof Error) {
         showToast(`Error adding asset category: ${error.message}`, 'error');
       } else {
@@ -321,10 +333,10 @@ const SettingsPage = () => {
 
   const handleEditCategory = (category: AssetCategory) => {
     setEditingCategoryId(category.id);
-    // Convert numbers to strings for form state
     setEditingCategory({
-      ...category,
-      lifespan_years: String(category.lifespan_years),
+      id: category.id,
+      name: category.name,
+      lifespan_years: String(category.lifespan), // Map DB 'lifespan' to form 'lifespan_years'
       avg_replacement_cost: String(category.avg_replacement_cost),
     });
   };
@@ -344,30 +356,31 @@ const SettingsPage = () => {
       return;
     }
 
-    const lifespan_years = parseFloat(lifespanStr);
-    const avg_replacement_cost = parseFloat(costStr);
+    const lifespan_val = parseFloat(lifespanStr);
+    const avg_replacement_cost_val = parseFloat(costStr);
 
-    if (isNaN(lifespan_years) || lifespan_years <= 0 || isNaN(avg_replacement_cost) || avg_replacement_cost <= 0) {
-      showToast('Lifespan and cost must be valid positive numbers.', 'error');
+    if (isNaN(lifespan_val) || lifespan_val <= 0 || isNaN(avg_replacement_cost_val) || avg_replacement_cost_val < 0) {
+      showToast('Lifespan must be a positive number. Cost must be a non-negative number.', 'error');
       return;
     }
 
     try {
       const updateData = {
         name: name,
-        lifespan_years: lifespan_years,
-        avg_replacement_cost: avg_replacement_cost,
+        lifespan: lifespan_val, // Map form's lifespan_years to DB 'lifespan'
+        avg_replacement_cost: avg_replacement_cost_val,
       };
       const { error } = await supabase
-        .from('asset_categories')
+        .from('categories')
         .update(updateData)
         .eq('id', id);
       if (error) throw error;
-      setAssetCategories(assetCategories.map(cat => cat.id === id ? { ...cat, ...updateData } : cat));
+      setAssetCategories(assetCategories.map(cat => cat.id === id ? { ...cat, ...updateData, id: cat.id } : cat));
       setEditingCategoryId(null);
       setEditingCategory({});
       showToast('Asset category updated successfully!', 'success');
     } catch (error: unknown) {
+      console.error('Error updating asset category:', error);
       if (error instanceof Error) {
         showToast(`Error updating asset category: ${error.message}`, 'error');
       } else {
@@ -379,11 +392,12 @@ const SettingsPage = () => {
   const handleDeleteAssetCategory = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this asset category?')) {
       try {
-        const { error } = await supabase.from('asset_categories').delete().eq('id', id);
+        const { error } = await supabase.from('categories').delete().eq('id', id);
         if (error) throw error;
         setAssetCategories(assetCategories.filter(cat => cat.id !== id));
         showToast('Asset category deleted successfully!', 'success');
       } catch (error: unknown) {
+        console.error('Error deleting asset category:', error);
         if (error instanceof Error) {
           showToast(`Error deleting asset category: ${error.message}`, 'error');
         } else {
@@ -409,15 +423,15 @@ const SettingsPage = () => {
               type="number"
               value={inflationRate}
               onChange={handleInflationRateChange}
-              onBlur={updateInflationRate} // Update on blur or with a save button
               min="0"
+              step="0.01"
               className="mt-1 block w-40 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="e.g., 2.5"
             />
             <span className="text-gray-600">%</span>
             <button
               onClick={updateInflationRate}
-              disabled={loadingInflation || inflationRate === initialInflationRate}
+              disabled={loadingInflation || String(inflationRate) === String(initialInflationRate)}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-300"
             >
               {loadingInflation ? 'Saving...' : 'Save Rate'}
@@ -492,7 +506,7 @@ const SettingsPage = () => {
           />
           <input
             type="number"
-            name="lifespan_years"
+            name="lifespan_years" // Corresponds to AssetCategoryFormState
             value={newCategory.lifespan_years || ''}
             onChange={handleNewCategoryChange}
             placeholder="Lifespan (Years)"
@@ -506,6 +520,7 @@ const SettingsPage = () => {
             onChange={handleNewCategoryChange}
             placeholder="Avg. Replacement Cost"
             min="0"
+            step="0.01"
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
           <button
@@ -539,7 +554,7 @@ const SettingsPage = () => {
                           <input type="number" name="lifespan_years" value={editingCategory.lifespan_years || ''} onChange={handleEditingCategoryChange} min="0" className="w-full px-2 py-1 border border-gray-300 rounded-md"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="number" name="avg_replacement_cost" value={editingCategory.avg_replacement_cost || ''} onChange={handleEditingCategoryChange} min="0" className="w-full px-2 py-1 border border-gray-300 rounded-md"/>
+                          <input type="number" name="avg_replacement_cost" value={editingCategory.avg_replacement_cost || ''} onChange={handleEditingCategoryChange} min="0" step="0.01" className="w-full px-2 py-1 border border-gray-300 rounded-md"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <button onClick={() => handleSaveCategory(category.id)} className="text-green-600 hover:text-green-800">Save</button>
@@ -549,7 +564,7 @@ const SettingsPage = () => {
                     ) : (
                       <>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{category.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.lifespan_years}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.lifespan}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.avg_replacement_cost.toLocaleString()}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <button onClick={() => handleEditCategory(category)} className="text-indigo-600 hover:text-indigo-800">Edit</button>
