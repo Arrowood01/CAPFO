@@ -41,24 +41,26 @@ const transformData = (
     'Install Date': 'install_date', // Added Install Date
   };
 
-  return data.map((row) => {
+  return data.map((row) => { // `row` is an array of cell values for one Excel row
     const transformedRow: TransformedRow = {};
-    for (const colIndexStr in mappings) {
-      const colIndex = parseInt(colIndexStr, 10);
-      const mappingKey = mappings[colIndex]; // e.g., "Make", "Category", "Install Date"
-      
-      if (mappingKey === 'Ignore' || mappingKey === '') {
-        continue; // Skip ignored or unselected columns
+    // Iterate from 0 to the number of columns in the current row.
+    // This ensures we process each cell of the row and use its index to find the mapping.
+    for (let colIndex = 0; colIndex < row.length; colIndex++) {
+      // `mappings` uses number keys for column indices.
+      const mappingKey = mappings[colIndex]; // User's selection for this specific column index.
+
+      if (!mappingKey || mappingKey === 'Ignore' || mappingKey === '') {
+        continue; // Skip if no mapping, or explicitly ignored, or unselected.
       }
 
-      const outputKey = outputKeys[mappingKey]; // e.g., "make", "category_name", "install_date"
-      
-      if (outputKey && row[colIndex] !== undefined && row[colIndex] !== null) { // Ensure outputKey exists for the mappingKey
+      const outputKey = outputKeys[mappingKey]; // Target internal key, e.g., "category_name"
+
+      if (outputKey && row[colIndex] !== undefined && row[colIndex] !== null) {
         let value: string | number | null | Date = row[colIndex];
 
         // Apply specific transformations based on the outputKey
         if (outputKey === 'purchase_price') {
-          const numValue = parseFloat(String(value).replace(/[^0-9.-]+/g,""));
+          const numValue = parseFloat(String(value).replace(/[^0-9.-]+/g, ""));
           value = isNaN(numValue) ? String(value) : numValue;
         } else if (outputKey === 'install_date') {
           if (typeof value === 'number') { // Excel date serial number
@@ -67,7 +69,7 @@ const transformData = (
             if (!isNaN(dateObj.getTime())) {
               value = dateObj.toISOString().split('T')[0];
             } else {
-              console.warn(`Could not parse Excel date number: ${row[colIndex]} for ${mappingKey}`);
+              console.warn(`Could not parse Excel date number: ${row[colIndex]} for ${mappingKey} at colIndex ${colIndex}`);
               value = String(row[colIndex]);
             }
           } else { // String date
@@ -75,21 +77,18 @@ const transformData = (
             if (!isNaN(dateObj.getTime())) {
               value = dateObj.toISOString().split('T')[0];
             } else {
-              console.warn(`Could not parse date string: ${row[colIndex]} for ${mappingKey}`);
-              value = String(row[colIndex]); // Keep original string if parsing fails
+              console.warn(`Could not parse date string: "${row[colIndex]}" for ${mappingKey} at colIndex ${colIndex}`);
+              value = String(row[colIndex]);
             }
           }
         } else if (outputKey === 'category_name') {
-            value = String(value); // Ensure category_name is a string
+          value = String(value); // Ensure category_name is a string
         }
-        // For other keys like 'make', 'model', 'serial_number', 'unit_number', no special transformation is needed here beyond String() if necessary.
-        // The value is already assigned from row[colIndex].
+        // Other fields like make, model, serial_number, unit_number will use the value as is (or after String conversion if needed by DB type)
         
         transformedRow[outputKey] = value as string | number | null;
       } else if (!outputKey && mappingKey) {
-        // This case handles if a mappingKey exists (e.g., "Laundry" from user dropdown)
-        // but it's not defined in our outputKeys object.
-        console.warn(`No outputKey defined for mappingKey: "${mappingKey}" from column index ${colIndex}. This column's data will be skipped.`);
+        console.warn(`No outputKey defined for mappingKey: "${mappingKey}" (from column index ${colIndex}). This column's data will be skipped.`);
       }
     }
     return transformedRow;
