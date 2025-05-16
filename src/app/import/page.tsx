@@ -41,30 +41,23 @@ const transformData = (
     'Install Date': 'install_date', // Added Install Date
   };
 
-  return data.map((row) => { // `row` is an array of cell values for one Excel row
+  return data.map((row) => {
     const transformedRow: TransformedRow = {};
-    // Iterate from 0 to the number of columns in the current row.
-    // This ensures we process each cell of the row and use its index to find the mapping.
-    for (let colIndex = 0; colIndex < row.length; colIndex++) {
-      // `mappings` uses number keys for column indices.
-      const mappingKey = mappings[colIndex]; // User's selection for this specific column index.
 
-      if (!mappingKey || mappingKey === 'Ignore' || mappingKey === '') {
-        continue; // Skip if no mapping, or explicitly ignored, or unselected.
-      }
-
-      const outputKey = outputKeys[mappingKey]; // Target internal key, e.g., "category_name"
-
-      if (outputKey && row[colIndex] !== undefined && row[colIndex] !== null) {
-        // TEMPORARY: Direct assignment without special parsing to isolate the issue.
-        transformedRow[outputKey] = String(row[colIndex]); // Convert all to string for simplicity for now
-        
-      } else if (!outputKey && mappingKey) {
-        console.warn(`No outputKey defined for mappingKey: "${mappingKey}" (from column index ${colIndex}). This column's data will be skipped.`);
-      }
+    // EXTREME DIAGNOSTIC STEP:
+    // Only process the very first column of data (row[0])
+    // And always map it to a hardcoded field name.
+    // This ignores all user mappings and other columns.
+    if (row.length > 0 && row[0] !== undefined && row[0] !== null) {
+      transformedRow["test_field_hardcoded"] = String(row[0]);
     }
+    
+    // All other logic is bypassed for this test.
+    // If other columns/headers appear, or if "test_field_hardcoded" doesn't show row[0] data,
+    // then the issue is very deep or outside this function.
+
     return transformedRow;
-  }).filter(obj => Object.keys(obj).length > 0);
+  }).filter(obj => Object.keys(obj).length > 0 && obj["test_field_hardcoded"] !== undefined); // Ensure we only keep rows that got the test field
 };
 
 
