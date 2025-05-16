@@ -1,3 +1,4 @@
+// Minor change for commit
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
