@@ -61,7 +61,7 @@ const SettingsPage = () => {
     try {
       const { data, error } = await supabase
         .from('settings')
-        .select('id, value') // Select 'value' which holds the rate
+        .select('id, value') // Select 'value' which holds the rate, not inflation_rate column
         .eq('key', 'inflation_rate') // Filter for the 'inflation_rate' key
         .limit(1)
         .single();
@@ -120,7 +120,7 @@ const SettingsPage = () => {
       if (settingsId) { // If ID exists, update
         const { error: updateError } = await supabase
           .from('settings')
-          .update({ value: (rateValue / 100).toString() })
+          .update({ value: (rateValue / 100).toString() }) // Update the 'value' column
           .eq('id', settingsId);
         if (updateError) throw updateError;
         setInitialInflationRate(rateValue);
@@ -128,7 +128,7 @@ const SettingsPage = () => {
       } else { // No ID, so try to insert
         const { data: insertData, error: insertError } = await supabase
           .from('settings')
-          .insert({ key: 'inflation_rate', value: (rateValue / 100).toString() })
+          .insert({ key: 'inflation_rate', value: (rateValue / 100).toString() }) // Insert key and value
           .select('id')
           .single();
         if (insertError) throw insertError;
@@ -302,7 +302,7 @@ const SettingsPage = () => {
 
     try {
       const { data, error } = await supabase
-        .from('categories')
+        .from('categories') // Corrected table name
         .insert([{
           name: name,
           lifespan: lifespan_val, // Map form's lifespan_years to DB 'lifespan'
@@ -372,7 +372,7 @@ const SettingsPage = () => {
         avg_replacement_cost: avg_replacement_cost_val,
       };
       const { error } = await supabase
-        .from('categories')
+        .from('categories') // Corrected table name
         .update(updateData)
         .eq('id', id);
       if (error) throw error;
