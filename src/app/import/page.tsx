@@ -41,57 +41,56 @@ const transformData = (
     'Install Date': 'install_date', // Added Install Date
   };
 
-  return data.map((row) => { // `row` is an array of cell values for one Excel row
+  return data.map((row) => {
     const transformedRow: TransformedRow = {};
-    // Iterate from 0 to the number of columns in the current row.
-    // This ensures we process each cell of the row and use its index to find the mapping.
-    for (let colIndex = 0; colIndex < row.length; colIndex++) {
-      // `mappings` uses number keys for column indices.
-      const mappingKey = mappings[colIndex]; // User's selection for this specific column index.
+    for (let currentColumnIndex = 0; currentColumnIndex < row.length; currentColumnIndex++) {
+      const userSelectedFieldForThisColumn = mappings[currentColumnIndex];
 
-      if (!mappingKey || mappingKey === 'Ignore' || mappingKey === '') {
-        continue; // Skip if no mapping, or explicitly ignored, or unselected.
+      if (!userSelectedFieldForThisColumn || userSelectedFieldForThisColumn === 'Ignore' || userSelectedFieldForThisColumn === '') {
+        if (userSelectedFieldForThisColumn === 'Ignore') {
+            console.warn(`DEBUG: Skipping colIndex=${currentColumnIndex} because it was mapped to 'Ignore'. Raw data: ${row[currentColumnIndex]}`);
+        }
+        continue;
       }
 
-      const outputKey = outputKeys[mappingKey]; // Target internal key, e.g., "category_name"
+      const internalFieldName = outputKeys[userSelectedFieldForThisColumn];
 
-      if (outputKey && row[colIndex] !== undefined && row[colIndex] !== null) {
-        let value: string | number | null | Date = row[colIndex];
+      if (internalFieldName && row[currentColumnIndex] !== undefined && row[currentColumnIndex] !== null) {
+        let cellValue: string | number | null | Date = row[currentColumnIndex];
 
-        // Apply specific transformations based on the outputKey
-        if (outputKey === 'purchase_price') {
-          const numValue = parseFloat(String(value).replace(/[^0-9.-]+/g, ""));
-          value = isNaN(numValue) ? String(value) : numValue;
-        } else if (outputKey === 'install_date') {
-          if (typeof value === 'number') { // Excel date serial number
+        if (internalFieldName === 'purchase_price') {
+          const numValue = parseFloat(String(cellValue).replace(/[^0-9.-]+/g, ""));
+          cellValue = isNaN(numValue) ? String(cellValue) : numValue;
+        } else if (internalFieldName === 'install_date') {
+          if (typeof cellValue === 'number') {
             const excelEpoch = new Date(1899, 11, 30);
-            const dateObj = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
+            const dateObj = new Date(excelEpoch.getTime() + cellValue * 24 * 60 * 60 * 1000);
             if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toISOString().split('T')[0];
+              cellValue = dateObj.toISOString().split('T')[0];
             } else {
-              console.warn(`Could not parse Excel date number: ${row[colIndex]} for ${mappingKey} at colIndex ${colIndex}`);
-              value = String(row[colIndex]);
+              console.warn(`DEBUG: Could not parse Excel date number: ${row[currentColumnIndex]} for ${userSelectedFieldForThisColumn} at colIndex ${currentColumnIndex}`);
+              cellValue = String(row[currentColumnIndex]);
             }
-          } else { // String date
-            const dateObj = new Date(String(value));
+          } else {
+            const dateObj = new Date(String(cellValue));
             if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toISOString().split('T')[0];
+              cellValue = dateObj.toISOString().split('T')[0];
             } else {
-              console.warn(`Could not parse date string: "${row[colIndex]}" for ${mappingKey} at colIndex ${colIndex}`);
-              value = String(row[colIndex]);
+              console.warn(`DEBUG: Could not parse date string: "${row[currentColumnIndex]}" for ${userSelectedFieldForThisColumn} at colIndex ${currentColumnIndex}`);
+              cellValue = String(row[currentColumnIndex]);
             }
           }
-        } else if (outputKey === 'category_name') {
-          value = String(value); // Ensure category_name is a string
+        } else if (internalFieldName === 'category_name') {
+          cellValue = String(cellValue);
         }
-        // Other fields like make, model, serial_number, unit_number will use the value as is (or after String conversion if needed by DB type)
         
         console.warn(
-          `Transforming: colIndex=${colIndex}, mappingKey="${mappingKey}", outputKey="${outputKey}", rawValue="${row[colIndex]}", processedValue="${value}"`
+            `DEBUG: Assigning to transformedRow: internalFieldName="${internalFieldName}", originalExcelColumnIndex=${currentColumnIndex}, userSelectedField="${userSelectedFieldForThisColumn}", rawValue="${row[currentColumnIndex]}", processedValue="${cellValue}"`
         );
-        transformedRow[outputKey] = value as string | number | null;
-      } else if (!outputKey && mappingKey) {
-        console.warn(`No outputKey defined for mappingKey: "${mappingKey}" (from column index ${colIndex}). This column's data will be skipped.`);
+        transformedRow[internalFieldName] = cellValue as string | number | null;
+
+      } else if (!internalFieldName && userSelectedFieldForThisColumn) {
+        console.warn(`DEBUG: No internalFieldName (outputKey) defined for userSelectedField: "${userSelectedFieldForThisColumn}" (from colIndex ${currentColumnIndex}). This column's data will be skipped.`);
       }
     }
     return transformedRow;
