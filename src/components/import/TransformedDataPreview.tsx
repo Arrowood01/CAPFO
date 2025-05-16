@@ -5,22 +5,22 @@ import React from 'react';
 // Assuming TransformedSheetData is defined elsewhere (e.g., in a types file or passed down)
 // For now, let's define it here if not already globally available.
 // If it's in types.ts or similar: import { TransformedSheetData } from '@/types';
-type TransformedRow = Record<string, string | number | null>;
+type TransformedRow = Record<string, string | number | null | undefined>; // Updated to allow undefined
 type TransformedSheetData = TransformedRow[];
 
 interface TransformedDataPreviewProps {
   transformedData: TransformedSheetData;
   onStartOver: () => void;
-  communityId: string; // Added
-  categoryId: string;  // Added
-  onImport: () => Promise<void>; // Added
+  communityId: string; // Stays
+  // categoryId: string;  // Removed
+  onImport: () => Promise<void>; // Stays
 }
 
 const TransformedDataPreview = ({
   transformedData,
   onStartOver,
   communityId,
-  categoryId,
+  // categoryId, // Removed
   onImport
 }: TransformedDataPreviewProps) => {
   const [isImporting, setIsImporting] = React.useState(false);
@@ -28,11 +28,11 @@ const TransformedDataPreview = ({
   if (!transformedData || transformedData.length === 0) {
     // This case should ideally not be reached if navigation to this step is controlled
     return (
-      <div className="p-4 border rounded-lg shadow-sm bg-white text-gray-700">
+      <div className="p-4 border rounded-lg shadow-sm bg-white text-black border-[var(--border-blue)]"> {/* White bg, black text, blue border */}
         <p>No data to display or import has been completed. Please complete the mapping and assignment process first.</p>
         <button
             onClick={onStartOver}
-            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-[var(--primary-blue)] rounded-md hover:bg-[var(--primary-blue-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Blue button */
         >
             Start Over
         </button>
@@ -40,13 +40,13 @@ const TransformedDataPreview = ({
     );
   }
   
-  if (!communityId || !categoryId) {
+  if (!communityId) { // Removed categoryId check
     return (
-       <div className="p-4 border rounded-lg shadow-sm bg-white text-gray-700">
-        <p>Community and Category not assigned. Please go back and assign them.</p>
+       <div className="p-4 border rounded-lg shadow-sm bg-white text-black border-[var(--border-blue)]"> {/* White bg, black text, blue border */}
+        <p>Community not assigned. Please go back and assign it.</p> {/* Updated message */}
          <button
             onClick={onStartOver} // Or a more specific "go back to assignment" handler if available
-            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-[var(--primary-blue)] rounded-md hover:bg-[var(--primary-blue-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Blue button */
         >
             Start Over
         </button>
@@ -70,7 +70,7 @@ const TransformedDataPreview = ({
   const headers = Object.keys(transformedData[0] || {});
 
   // Reorder headers to a more logical sequence if possible
-  const preferredHeaderOrder = ['make', 'model', 'unit_number', 'serial_number', 'purchase_price'];
+  const preferredHeaderOrder = ['make', 'model', 'category_name', 'unit_number', 'serial_number', 'purchase_price']; // Added category_name
   const sortedHeaders = headers.sort((a, b) => {
     const indexA = preferredHeaderOrder.indexOf(a);
     const indexB = preferredHeaderOrder.indexOf(b);
@@ -82,20 +82,20 @@ const TransformedDataPreview = ({
 
 
   return (
-    <div className="p-4 border rounded-lg shadow-sm bg-white">
-      <h2 className="text-xl font-semibold mb-4 text-gray-700">Preview Transformed Data</h2>
-      <p className="text-sm text-gray-600 mb-4">
+    <div className="p-4 border rounded-lg shadow-sm bg-white border-[var(--border-blue)]"> {/* White bg, blue border */}
+      <h2 className="text-xl font-semibold mb-4 text-black">Preview Transformed Data</h2> {/* Black text */}
+      <p className="text-sm text-gray-700 mb-4"> {/* Lighter black text */}
         This is a preview of your data after applying the column mappings.
       </p>
       
       <div className="overflow-x-auto mb-6">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-300 border border-gray-300"> {/* Adjusted border color */}
+          <thead className="bg-gray-100"> {/* Lighter gray for table head */}
             <tr>
               {sortedHeaders.map((header) => (
                 <th
                   key={header}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider" /* Black text for header */
                 >
                   {header.replace(/_/g, ' ')}
                 </th>
@@ -104,9 +104,9 @@ const TransformedDataPreview = ({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {transformedData.map((row, rowIndex) => (
-              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}> {/* Alternating row colors */}
                 {sortedHeaders.map((header) => (
-                  <td key={header} className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                  <td key={header} className="px-4 py-3 whitespace-nowrap text-sm text-gray-700"> {/* Lighter black for cell text */}
                     {String(row[header] !== null && row[header] !== undefined ? row[header] : '')}
                   </td>
                 ))}
@@ -121,15 +121,15 @@ const TransformedDataPreview = ({
           type="button"
           onClick={onStartOver}
           disabled={isImporting}
-          className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-black hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)] disabled:opacity-50" /* Black text, light gray hover, blue focus */
         >
           Start Over
         </button>
         <button
           type="button"
           onClick={handleImportClick}
-          disabled={isImporting || !communityId || !categoryId}
-          className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          disabled={isImporting || !communityId} // Removed categoryId from condition
+          className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[var(--primary-blue)] hover:bg-[var(--primary-blue-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)] disabled:bg-gray-400 disabled:cursor-not-allowed" /* Blue button */
         >
           {isImporting ? 'Importing...' : `Import ${transformedData.length} Assets`}
         </button>

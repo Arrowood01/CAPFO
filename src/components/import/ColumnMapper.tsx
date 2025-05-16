@@ -20,6 +20,7 @@ const MAPPING_OPTIONS = [
   { value: 'Serial Number', label: 'Serial Number' },
   { value: 'Unit Number', label: 'Unit Number' },
   { value: 'Purchase Price', label: 'Purchase Price' },
+  { value: 'Category', label: 'Category' },
   { value: 'Ignore', label: 'Ignore' },
 ];
 
@@ -104,11 +105,11 @@ const ColumnMapper = ({
 
   if (!dataPreview || dataPreview.length === 0) {
     return (
-      <div className="p-4 border rounded-lg shadow-sm bg-white text-gray-700">
+      <div className="p-4 border rounded-lg shadow-sm bg-white text-black border-[var(--border-blue)]"> {/* White bg, black text, blue border */}
         <p>No data available for mapping. Please upload a file first.</p>
         <button
             onClick={onReset}
-            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-[var(--primary-blue)] rounded-md hover:bg-[var(--primary-blue-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Blue button */
         >
             Upload New File
         </button>
@@ -117,34 +118,34 @@ const ColumnMapper = ({
   }
 
   return (
-    <div className="p-4 border rounded-lg shadow-sm bg-white">
-      <h2 className="text-xl font-semibold mb-4 text-gray-700">Map Columns</h2>
-      <p className="text-sm text-gray-600 mb-1">
+    <div className="p-4 border rounded-lg shadow-sm bg-white border-[var(--border-blue)]"> {/* White bg, blue border */}
+      <h2 className="text-xl font-semibold mb-4 text-black">Map Columns</h2> {/* Black text */}
+      <p className="text-sm text-gray-700 mb-1"> {/* Lighter black text */}
         Preview of the first 5 data rows (starting from row 10 of your file).
       </p>
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-gray-700 mb-4"> {/* Lighter black text */}
         Select the corresponding field for each column from your uploaded sheet.
       </p>
 
       {validationError && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md">
+        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md"> {/* Error messages remain red for visibility */}
           <p>{validationError}</p>
         </div>
       )}
 
       <div className="overflow-x-auto mb-6">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-300 border border-gray-300"> {/* Adjusted border color */}
+          <thead className="bg-gray-100"> {/* Lighter gray for table head */}
             <tr>
               {Array.from({ length: numColumns }).map((_, colIndex) => (
-                <th key={colIndex} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th key={colIndex} className="px-3 py-2 text-left text-xs font-medium text-black uppercase tracking-wider"> {/* Black text for header */}
                   <select
                     value={mappings[colIndex] || ''}
                     onChange={(e) => handleMappingChange(colIndex, e.target.value)}
-                    className="block w-full p-2 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className="block w-full p-2 border-gray-300 rounded-md shadow-sm focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm text-black" /* Blue focus, black text */
                   >
                     {MAPPING_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
+                      <option key={opt.value} value={opt.value} className="text-black"> {/* Black text for options */}
                         {opt.label}
                       </option>
                     ))}
@@ -155,9 +156,9 @@ const ColumnMapper = ({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {dataPreview.map((row, rowIndex) => (
-              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}> {/* Alternating row colors */}
                 {row.map((cell, cellIndex) => (
-                  <td key={cellIndex} className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 truncate max-w-xs">
+                  <td key={cellIndex} className="px-3 py-2 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs"> {/* Lighter black for cell text */}
                     {String(cell !== null && cell !== undefined ? cell : '')}
                   </td>
                 ))}
@@ -170,13 +171,13 @@ const ColumnMapper = ({
       <div className="flex justify-between items-center">
         <button
           onClick={onReset}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="px-4 py-2 text-sm font-medium text-black bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Black text, gray bg, blue focus */
         >
           Back to Upload
         </button>
         <button
           onClick={handleConfirm}
-          className="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          className="px-6 py-2 text-sm font-medium text-white bg-[var(--primary-blue)] rounded-md hover:bg-[var(--primary-blue-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Blue button */
         >
           Confirm Mappings
         </button>

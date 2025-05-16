@@ -410,14 +410,14 @@ const SettingsPage = () => {
 
 
   return (
-    <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
+    <div className="p-6 space-y-8 bg-white text-black min-h-screen"> {/* White bg, black text */}
+      <h1 className="text-3xl font-bold text-black">Settings</h1> {/* Black text */}
 
       {/* Global Inflation Rate Section */}
-      <section className="p-6 bg-white shadow-lg rounded-lg">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Global Inflation Rate</h2>
+      <section className="p-6 bg-white shadow-lg rounded-lg border border-[var(--border-blue)]"> {/* Blue border */}
+        <h2 className="text-xl font-semibold text-black mb-4">Global Inflation Rate</h2> {/* Black text */}
         {loadingInflation ? (
-          <p>Loading inflation rate...</p>
+          <p className="text-black">Loading inflation rate...</p>
         ) : (
           <div className="flex items-center space-x-3">
             <input
@@ -426,46 +426,46 @@ const SettingsPage = () => {
               onChange={handleInflationRateChange}
               min="0"
               step="0.01"
-              className="mt-1 block w-40 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-40 px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
               placeholder="e.g., 2.5"
             />
-            <span className="text-gray-600">%</span>
+            <span className="text-black">%</span> {/* Black text */}
             <button
               onClick={updateInflationRate}
               disabled={loadingInflation || String(inflationRate) === String(initialInflationRate)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-300"
+              className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)] disabled:bg-gray-400" /* Blue button */
             >
               {loadingInflation ? 'Saving...' : 'Save Rate'}
             </button>
           </div>
         )}
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-gray-700"> {/* Lighter black text */}
           Set the global annual inflation rate. This will be used in forecasts.
         </p>
       </section>
 
       {/* Manage Communities Section */}
-      <section className="p-6 bg-white shadow-lg rounded-lg">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Manage Communities</h2>
+      <section className="p-6 bg-white shadow-lg rounded-lg border border-[var(--border-blue)]"> {/* Blue border */}
+        <h2 className="text-xl font-semibold text-black mb-4">Manage Communities</h2> {/* Black text */}
         <div className="mb-4 flex space-x-2">
           <input
             type="text"
             value={newCommunityName}
             onChange={(e) => setNewCommunityName(e.target.value)}
             placeholder="New community name"
-            className="flex-grow mt-1 block px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="flex-grow mt-1 block px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
           />
           <button
             onClick={handleAddCommunity}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)]" /* Blue button */
           >
             Add Community
           </button>
         </div>
-        {loadingCommunities ? <p>Loading communities...</p> : (
+        {loadingCommunities ? <p className="text-black">Loading communities...</p> : (
           <ul className="space-y-2">
             {communities.map((community) => (
-              <li key={community.id} className="flex items-center justify-between p-3 bg-gray-100 rounded-md">
+              <li key={community.id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md"> {/* Lighter item background */}
                 {editingCommunityId === community.id ? (
                   <input
                     type="text"
@@ -473,37 +473,37 @@ const SettingsPage = () => {
                     onChange={(e) => setEditingCommunityName(e.target.value)}
                     onBlur={() => handleSaveCommunityName(community.id)}
                     autoFocus
-                    className="flex-grow mr-2 px-2 py-1 border border-gray-300 rounded-md"
+                    className="flex-grow mr-2 px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]" /* Black text, blue focus */
                   />
                 ) : (
-                  <span className="text-gray-800">{community.name}</span>
+                  <span className="text-black">{community.name}</span> /* Black text */
                 )}
                 <div className="space-x-2">
                   {editingCommunityId === community.id ? (
-                    <button onClick={() => handleSaveCommunityName(community.id)} className="text-sm text-green-600 hover:text-green-800">Save</button>
+                    <button onClick={() => handleSaveCommunityName(community.id)} className="text-sm text-green-600 hover:text-green-700">Save</button> /* Green for save */
                   ) : (
-                    <button onClick={() => handleEditCommunity(community)} className="text-sm text-indigo-600 hover:text-indigo-800">Edit</button>
+                    <button onClick={() => handleEditCommunity(community)} className="text-sm text-[var(--primary-blue)] hover:text-[var(--primary-blue-hover)]">Edit</button> /* Blue for edit */
                   )}
-                  <button onClick={() => handleDeleteCommunity(community.id)} className="text-sm text-red-600 hover:text-red-800">Delete</button>
+                  <button onClick={() => handleDeleteCommunity(community.id)} className="text-sm text-red-600 hover:text-red-700">Delete</button> /* Red for delete */
                 </div>
               </li>
             ))}
-            {communities.length === 0 && !loadingCommunities && <p className="text-gray-500">No communities found. Add one above.</p>}
+            {communities.length === 0 && !loadingCommunities && <p className="text-gray-700">No communities found. Add one above.</p>} {/* Lighter black text */}
           </ul>
         )}
       </section>
 
       {/* Manage Asset Categories Section */}
-      <section className="p-6 bg-white shadow-lg rounded-lg">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Manage Asset Categories</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border border-gray-200 rounded-md">
+      <section className="p-6 bg-white shadow-lg rounded-lg border border-[var(--border-blue)]"> {/* Blue border */}
+        <h2 className="text-xl font-semibold text-black mb-4">Manage Asset Categories</h2> {/* Black text */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border border-gray-300 rounded-md bg-gray-50"> {/* Lighter background for form area */}
           <input
             type="text"
             name="name"
             value={newCategory.name || ''}
             onChange={handleNewCategoryChange}
             placeholder="Category Name"
-            className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
           />
           <input
             type="number"
@@ -512,7 +512,7 @@ const SettingsPage = () => {
             onChange={handleNewCategoryChange}
             placeholder="Lifespan (Years)"
             min="0"
-            className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
           />
           <input
             type="number"
@@ -522,25 +522,25 @@ const SettingsPage = () => {
             placeholder="Avg. Replacement Cost"
             min="0"
             step="0.01"
-            className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
           />
           <button
             onClick={handleAddAssetCategory}
-            className="md:col-span-4 mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 w-full"
+            className="md:col-span-4 mt-2 px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)] w-full" /* Blue button */
           >
             Add Category
           </button>
         </div>
 
-        {loadingCategories ? <p>Loading categories...</p> : (
+        {loadingCategories ? <p className="text-black">Loading categories...</p> : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-300 border border-gray-300"> {/* Adjusted border color */}
+              <thead className="bg-gray-100"> {/* Lighter gray for table head */}
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lifespan (Years)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Replacement Cost</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Lifespan (Years)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Avg. Replacement Cost</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -549,27 +549,27 @@ const SettingsPage = () => {
                     {editingCategoryId === category.id ? (
                       <>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="text" name="name" value={editingCategory.name || ''} onChange={handleEditingCategoryChange} className="w-full px-2 py-1 border border-gray-300 rounded-md"/>
+                          <input type="text" name="name" value={editingCategory.name || ''} onChange={handleEditingCategoryChange} className="w-full px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="number" name="lifespan_years" value={editingCategory.lifespan_years || ''} onChange={handleEditingCategoryChange} min="0" className="w-full px-2 py-1 border border-gray-300 rounded-md"/>
+                          <input type="number" name="lifespan_years" value={editingCategory.lifespan_years || ''} onChange={handleEditingCategoryChange} min="0" className="w-full px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="number" name="avg_replacement_cost" value={editingCategory.avg_replacement_cost || ''} onChange={handleEditingCategoryChange} min="0" step="0.01" className="w-full px-2 py-1 border border-gray-300 rounded-md"/>
+                          <input type="number" name="avg_replacement_cost" value={editingCategory.avg_replacement_cost || ''} onChange={handleEditingCategoryChange} min="0" step="0.01" className="w-full px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button onClick={() => handleSaveCategory(category.id)} className="text-green-600 hover:text-green-800">Save</button>
-                          <button onClick={() => setEditingCategoryId(null)} className="text-gray-600 hover:text-gray-800">Cancel</button>
+                          <button onClick={() => handleSaveCategory(category.id)} className="text-green-600 hover:text-green-700">Save</button>
+                          <button onClick={() => setEditingCategoryId(null)} className="text-gray-700 hover:text-black">Cancel</button>
                         </td>
                       </>
                     ) : (
                       <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{category.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.lifespan}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.avg_replacement_cost.toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-black">{category.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{category.lifespan}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${category.avg_replacement_cost.toLocaleString()}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button onClick={() => handleEditCategory(category)} className="text-indigo-600 hover:text-indigo-800">Edit</button>
-                          <button onClick={() => handleDeleteAssetCategory(category.id)} className="text-red-600 hover:text-red-800">Delete</button>
+                          <button onClick={() => handleEditCategory(category)} className="text-[var(--primary-blue)] hover:text-[var(--primary-blue-hover)]">Edit</button>
+                          <button onClick={() => handleDeleteAssetCategory(category.id)} className="text-red-600 hover:text-red-700">Delete</button>
                         </td>
                       </>
                     )}
@@ -577,7 +577,7 @@ const SettingsPage = () => {
                 ))}
               </tbody>
             </table>
-            {assetCategories.length === 0 && !loadingCategories && <p className="text-center py-4 text-gray-500">No asset categories found. Add one above.</p>}
+            {assetCategories.length === 0 && !loadingCategories && <p className="text-center py-4 text-gray-700">No asset categories found. Add one above.</p>}
           </div>
         )}
       </section>

@@ -13,9 +13,9 @@ const Navigation: React.FC = () => {
   const pathname = usePathname();
 
   return (
-    <nav className="bg-gray-800 p-4 shadow-md">
+    <nav className="bg-[var(--primary-blue)] p-4 shadow-md"> {/* Primary blue background */}
       <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-white">
+        <Link href="/" className="text-xl font-bold text-white"> {/* White text for title */}
           Capital Forecaster
         </Link>
         <ul className="flex space-x-4">
@@ -27,8 +27,8 @@ const Navigation: React.FC = () => {
                   href={link.href}
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
                     isActive
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      ? 'bg-[var(--primary-blue-hover)] text-white' // Darker blue for active, white text
+                      : 'text-blue-100 hover:bg-[var(--primary-blue-hover)] hover:text-white' // Lighter blue text, darker blue hover
                   }`}
                 >
                   {link.name}

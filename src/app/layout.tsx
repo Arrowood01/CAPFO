@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white text-black`}
       >
         <Navigation /> {/* Add the Navigation component here */}
         <main className="flex-grow container mx-auto px-4 py-8"> {/* Add a main tag for content */}
@@ -35,7 +35,7 @@ export default function RootLayout({
             {children}
           </AuthGuard>
         </main>
-        <footer className="bg-gray-100 text-center p-4 text-sm text-gray-600"> {/* Optional: Basic footer */}
+        <footer className="bg-gray-50 text-center p-4 text-sm text-gray-700 border-t border-gray-200"> {/* Lighter footer, black text */}
           © {new Date().getFullYear()} Capital Forecaster. All rights reserved.
         </footer>
       </body>

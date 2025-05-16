@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #ffffff; /* White background */
+  --foreground: #000000; /* Black foreground/text */
+  --primary-blue: #007bff;
+  --primary-blue-hover: #0056b3;
+  --secondary-blue: #e7f3ff; /* Lighter blue for accents or backgrounds */
+  --border-blue: #b3d7ff; /* Blue for borders */
 }
 
 @theme inline {
@@ -12,15 +16,37 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Remove dark mode preference to enforce light theme */
+/*
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
+*/
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Ensure input fields have black text */
+input,
+select,
+textarea {
+  color: #000000; /* Black text for input fields */
+}
+
+/* Style for select dropdown arrows to ensure visibility on white background if needed */
+select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25em 1.25em;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 2.5rem; /* Ensure space for arrow */
 }
