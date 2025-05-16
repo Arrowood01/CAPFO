@@ -41,23 +41,58 @@ const transformData = (
     'Install Date': 'install_date', // Added Install Date
   };
 
-  return data.map((row) => {
+  return data.map((row) => { // `row` is an array of cell values for one Excel row
     const transformedRow: TransformedRow = {};
+    // Iterate from 0 to the number of columns in the current row.
+    // This ensures we process each cell of the row and use its index to find the mapping.
+    for (let colIndex = 0; colIndex < row.length; colIndex++) {
+      // `mappings` uses number keys for column indices.
+      const mappingKey = mappings[colIndex]; // User's selection for this specific column index.
 
-    // EXTREME DIAGNOSTIC STEP:
-    // Only process the very first column of data (row[0])
-    // And always map it to a hardcoded field name.
-    // This ignores all user mappings and other columns.
-    if (row.length > 0 && row[0] !== undefined && row[0] !== null) {
-      transformedRow["test_field_hardcoded"] = String(row[0]);
+      if (!mappingKey || mappingKey === 'Ignore' || mappingKey === '') {
+        continue; // Skip if no mapping, or explicitly ignored, or unselected.
+      }
+
+      const outputKey = outputKeys[mappingKey]; // Target internal key, e.g., "category_name"
+
+      if (outputKey && row[colIndex] !== undefined && row[colIndex] !== null) {
+        let value: string | number | null | Date = row[colIndex];
+
+        // Apply specific transformations based on the outputKey
+        if (outputKey === 'purchase_price') {
+          const numValue = parseFloat(String(value).replace(/[^0-9.-]+/g, ""));
+          value = isNaN(numValue) ? String(value) : numValue;
+        } else if (outputKey === 'install_date') {
+          if (typeof value === 'number') { // Excel date serial number
+            const excelEpoch = new Date(1899, 11, 30);
+            const dateObj = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toISOString().split('T')[0];
+            } else {
+              console.warn(`Could not parse Excel date number: ${row[colIndex]} for ${mappingKey} at colIndex ${colIndex}`);
+              value = String(row[colIndex]);
+            }
+          } else { // String date
+            const dateObj = new Date(String(value));
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toISOString().split('T')[0];
+            } else {
+              console.warn(`Could not parse date string: "${row[colIndex]}" for ${mappingKey} at colIndex ${colIndex}`);
+              value = String(row[colIndex]);
+            }
+          }
+        } else if (outputKey === 'category_name') {
+          value = String(value); // Ensure category_name is a string
+        }
+        // Other fields like make, model, serial_number, unit_number will use the value as is (or after String conversion if needed by DB type)
+        
+        transformedRow[outputKey] = value as string | number | null;
+      } else if (!outputKey && mappingKey) {
+        console.warn(`No outputKey defined for mappingKey: "${mappingKey}" (from column index ${colIndex}). This column's data will be skipped.`);
+      }
     }
-    
-    // All other logic is bypassed for this test.
-    // If other columns/headers appear, or if "test_field_hardcoded" doesn't show row[0] data,
-    // then the issue is very deep or outside this function.
-
     return transformedRow;
-  }).filter(obj => Object.keys(obj).length > 0 && obj["test_field_hardcoded"] !== undefined); // Ensure we only keep rows that got the test field
+  }).filter(obj => Object.keys(obj).length > 0);
 };
 
 
