@@ -86,6 +86,9 @@ const transformData = (
         }
         // Other fields like make, model, serial_number, unit_number will use the value as is (or after String conversion if needed by DB type)
         
+        console.warn(
+          `Transforming: colIndex=${colIndex}, mappingKey="${mappingKey}", outputKey="${outputKey}", rawValue="${row[colIndex]}", processedValue="${value}"`
+        );
         transformedRow[outputKey] = value as string | number | null;
       } else if (!outputKey && mappingKey) {
         console.warn(`No outputKey defined for mappingKey: "${mappingKey}" (from column index ${colIndex}). This column's data will be skipped.`);
