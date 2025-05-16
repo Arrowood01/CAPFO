@@ -93,14 +93,8 @@ const ColumnMapper = ({
 
   const handleConfirm = () => {
     if (validateMappings()) {
-      // Filter out "Ignore" and unselected columns from the final mapping
-      const finalMappings: Record<number, string> = {};
-      for (const colIndex in mappings) {
-        if (mappings[colIndex] && mappings[colIndex] !== 'Ignore') {
-          finalMappings[colIndex] = mappings[colIndex];
-        }
-      }
-      onMappingConfirm(finalMappings, allUploadedData);
+      // Pass the raw mappings object; transformData will handle "Ignore" and empty strings.
+      onMappingConfirm(mappings, allUploadedData);
     }
   };
 
