@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient'; // Ensure this path is correct
-import type { Session, User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js'; // Removed unused Session import
 
 interface AuthGuardProps {
   children: React.ReactNode;
