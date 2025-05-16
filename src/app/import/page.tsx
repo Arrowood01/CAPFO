@@ -103,6 +103,7 @@ const ImportPage = () => {
   const [communities, setCommunities] = useState<Community[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
+  const [receivedMappingsDebug, setReceivedMappingsDebug] = useState<Record<number, string> | null>(null); // For debugging
   // const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null); // Removed
 
   useEffect(() => {
@@ -135,6 +136,7 @@ const ImportPage = () => {
 
   const handleMappingConfirm = useCallback(
     (mappings: Record<number, string>, allData: RawSheetData) => {
+      setReceivedMappingsDebug(mappings); // Store mappings for display
       const transformed = transformData(allData, mappings);
       setTransformedData(transformed);
       setCurrentStep('assign'); // Change to 'assign' step after mapping
@@ -307,6 +309,16 @@ const ImportPage = () => {
             onMappingConfirm={handleMappingConfirm}
             onReset={handleReset}
           />
+        )}
+
+        {/* Debug Display for Mappings */}
+        {(currentStep === 'assign' || currentStep === 'preview') && receivedMappingsDebug && (
+          <div className="my-4 p-4 border border-yellow-500 bg-yellow-50 rounded-md">
+            <h3 className="text-lg font-semibold text-yellow-700">Debug: Received Mappings</h3>
+            <pre className="text-xs text-yellow-800 whitespace-pre-wrap break-all">
+              {JSON.stringify(receivedMappingsDebug, null, 2)}
+            </pre>
+          </div>
         )}
 
         {currentStep === 'assign' && transformedData && (
