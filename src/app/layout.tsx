@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation"; // Import the Navigation component
-import AuthGuard from "@/components/AuthGuard"; // Import the AuthGuard component
+// import AuthGuard from "@/components/AuthGuard"; // Temporarily remove AuthGuard for diagnostics
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,9 +31,9 @@ export default function RootLayout({
       >
         <Navigation /> {/* Add the Navigation component here */}
         <main className="flex-grow container mx-auto px-4 py-8"> {/* Add a main tag for content */}
-          <AuthGuard>
+          {/* <AuthGuard> */}
             {children}
-          </AuthGuard>
+          {/* </AuthGuard> */}
         </main>
         <footer className="bg-gray-100 text-center p-4 text-sm text-gray-600"> {/* Optional: Basic footer */}
           © {new Date().getFullYear()} Capital Forecaster. All rights reserved.
