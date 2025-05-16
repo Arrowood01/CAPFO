@@ -56,37 +56,9 @@ const transformData = (
       const outputKey = outputKeys[mappingKey]; // Target internal key, e.g., "category_name"
 
       if (outputKey && row[colIndex] !== undefined && row[colIndex] !== null) {
-        let value: string | number | null | Date = row[colIndex];
-
-        // Apply specific transformations based on the outputKey
-        if (outputKey === 'purchase_price') {
-          const numValue = parseFloat(String(value).replace(/[^0-9.-]+/g, ""));
-          value = isNaN(numValue) ? String(value) : numValue;
-        } else if (outputKey === 'install_date') {
-          if (typeof value === 'number') { // Excel date serial number
-            const excelEpoch = new Date(1899, 11, 30);
-            const dateObj = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toISOString().split('T')[0];
-            } else {
-              console.warn(`Could not parse Excel date number: ${row[colIndex]} for ${mappingKey} at colIndex ${colIndex}`);
-              value = String(row[colIndex]);
-            }
-          } else { // String date
-            const dateObj = new Date(String(value));
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toISOString().split('T')[0];
-            } else {
-              console.warn(`Could not parse date string: "${row[colIndex]}" for ${mappingKey} at colIndex ${colIndex}`);
-              value = String(row[colIndex]);
-            }
-          }
-        } else if (outputKey === 'category_name') {
-          value = String(value); // Ensure category_name is a string
-        }
-        // Other fields like make, model, serial_number, unit_number will use the value as is (or after String conversion if needed by DB type)
+        // TEMPORARY: Direct assignment without special parsing to isolate the issue.
+        transformedRow[outputKey] = String(row[colIndex]); // Convert all to string for simplicity for now
         
-        transformedRow[outputKey] = value as string | number | null;
       } else if (!outputKey && mappingKey) {
         console.warn(`No outputKey defined for mappingKey: "${mappingKey}" (from column index ${colIndex}). This column's data will be skipped.`);
       }
