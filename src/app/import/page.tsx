@@ -46,9 +46,14 @@ const transformData = (
     for (const colIndexStr in mappings) {
       const colIndex = parseInt(colIndexStr, 10);
       const mappingKey = mappings[colIndex]; // e.g., "Make", "Category", "Install Date"
+      
+      if (mappingKey === 'Ignore' || mappingKey === '') {
+        continue; // Skip ignored or unselected columns
+      }
+
       const outputKey = outputKeys[mappingKey]; // e.g., "make", "category_name", "install_date"
       
-      if (mappingKey && outputKey && row[colIndex] !== undefined && row[colIndex] !== null) { // Ensure outputKey exists for the mappingKey
+      if (outputKey && row[colIndex] !== undefined && row[colIndex] !== null) { // Ensure outputKey exists for the mappingKey
         let value: string | number | null | Date = row[colIndex];
 
         // Apply specific transformations based on the outputKey
@@ -81,6 +86,10 @@ const transformData = (
         // The value is already assigned from row[colIndex].
         
         transformedRow[outputKey] = value as string | number | null;
+      } else if (!outputKey && mappingKey) {
+        // This case handles if a mappingKey exists (e.g., "Laundry" from user dropdown)
+        // but it's not defined in our outputKeys object.
+        console.warn(`No outputKey defined for mappingKey: "${mappingKey}" from column index ${colIndex}. This column's data will be skipped.`);
       }
     }
     return transformedRow;
