@@ -70,7 +70,7 @@ const TransformedDataPreview = ({
   const headers = Object.keys(transformedData[0] || {});
 
   // Reorder headers to a more logical sequence if possible
-  const preferredHeaderOrder = ['make', 'model', 'category_name', 'unit_number', 'serial_number', 'purchase_price']; // Added category_name
+  const preferredHeaderOrder = ['make', 'model', 'category_name', 'install_date', 'unit_number', 'serial_number', 'purchase_price']; // Added install_date
   const sortedHeaders = headers.sort((a, b) => {
     const indexA = preferredHeaderOrder.indexOf(a);
     const indexB = preferredHeaderOrder.indexOf(b);

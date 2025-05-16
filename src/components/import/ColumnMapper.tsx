@@ -21,6 +21,7 @@ const MAPPING_OPTIONS = [
   { value: 'Unit Number', label: 'Unit Number' },
   { value: 'Purchase Price', label: 'Purchase Price' },
   { value: 'Category', label: 'Category' },
+  { value: 'Install Date', label: 'Install Date' },
   { value: 'Ignore', label: 'Ignore' },
 ];
 

@@ -37,32 +37,59 @@ const transformData = (
     'Serial Number': 'serial_number',
     'Unit Number': 'unit_number',
     'Purchase Price': 'purchase_price',
-    'Category': 'category_name', // Added Category
+    'Category': 'category_name',
+    'Install Date': 'install_date', // Added Install Date
   };
 
   return data.map((row) => {
     const transformedRow: TransformedRow = {};
     for (const colIndexStr in mappings) {
       const colIndex = parseInt(colIndexStr, 10);
-      const mappingKey = mappings[colIndex]; // e.g., "Make", "Category"
-      const outputKey = outputKeys[mappingKey]; // e.g., "make", "category_name"
+      const mappingKey = mappings[colIndex]; // e.g., "Make", "Category", "Install Date"
+      const outputKey = outputKeys[mappingKey]; // e.g., "make", "category_name", "install_date"
       
-      if (mappingKey && row[colIndex] !== undefined && row[colIndex] !== null) { // Check mappingKey directly
-        let value = row[colIndex];
-        if (outputKey) { // If it's a standard field with a direct outputKey
-          // Attempt to convert purchase_price to number
+      if (mappingKey && row[colIndex] !== undefined && row[colIndex] !== null) {
+        let value: string | number | null | Date = row[colIndex];
+
+        if (outputKey) { // Standard fields with direct outputKey
           if (outputKey === 'purchase_price') {
             const numValue = parseFloat(String(value).replace(/[^0-9.-]+/g,""));
             value = isNaN(numValue) ? String(value) : numValue;
+          } else if (outputKey === 'install_date') {
+            // Attempt to parse date. Excel dates can be numbers or strings.
+            // This is a basic parser; a more robust one might be needed for various date formats.
+            if (typeof value === 'number') { // Excel date serial number
+              const excelEpoch = new Date(1899, 11, 30); // Excel epoch starts Dec 30, 1899 for Windows
+              const dateObj = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
+              if (!isNaN(dateObj.getTime())) {
+                value = dateObj.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+              } else {
+                console.warn(`Could not parse Excel date number: ${row[colIndex]} for ${mappingKey}`);
+                value = String(row[colIndex]); // Keep original if parsing fails
+              }
+            } else { // String date
+              const dateObj = new Date(String(value));
+              if (!isNaN(dateObj.getTime())) {
+                value = dateObj.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+              } else {
+                console.warn(`Could not parse date string: ${row[colIndex]} for ${mappingKey}`);
+                // Keep original string if parsing fails, or set to null/undefined
+                // For now, let's keep the original string to allow manual correction or to see the problematic data.
+                // value = null;
+              }
+            }
           }
-          transformedRow[outputKey] = value;
-        } else if (mappingKey === 'Category') { // Handle Category specifically
+          transformedRow[outputKey] = value as string | number | null; // Cast as value type might change
+        } else if (mappingKey === 'Category') { // Handle Category specifically (already done)
           transformedRow['category_name'] = String(value);
         }
+        // Note: if mappingKey is 'Install Date' but outputKey is not defined (e.g. due to a typo in outputKeys),
+        // it won't be processed by the 'else if (outputKey === 'install_date')' block above.
+        // The current logic assumes 'Install Date' will have a corresponding outputKey.
       }
     }
     return transformedRow;
-  }).filter(obj => Object.keys(obj).length > 0); // Remove empty objects if a row had no mapped data
+  }).filter(obj => Object.keys(obj).length > 0);
 };
 
 
@@ -223,6 +250,7 @@ const ImportPage = () => {
         ...assetData,
         community_id: selectedCommunityId,
         category_id: categoryId,
+        install_date: assetData.install_date || null, // Add install_date, ensure it's null if not present
         created_at: new Date().toISOString(),
       });
     }
