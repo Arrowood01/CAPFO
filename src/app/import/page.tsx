@@ -167,7 +167,7 @@ const ImportPage = () => {
       }
       const categoryName = String(row.category_name).trim();
       const categoryNameLower = categoryName.toLowerCase();
-      let categoryId = categoryNameToIdMap.get(categoryNameLower);
+      const categoryId = categoryNameToIdMap.get(categoryNameLower); // Changed to const
 
       if (!categoryId) {
         // Check if we've already queued this new category for creation
@@ -216,6 +216,7 @@ const ImportPage = () => {
       }
       
       // Remove category_name from the row before inserting, as DB expects category_id
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { category_name, ...assetData } = row;
 
       assetsToInsert.push({

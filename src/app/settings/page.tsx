@@ -453,11 +453,11 @@ const SettingsPage = () => {
             value={newCommunityName}
             onChange={(e) => setNewCommunityName(e.target.value)}
             placeholder="New community name"
-            className="flex-grow mt-1 block px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
+            className="flex-grow mt-1 block px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
           />
           <button
             onClick={handleAddCommunity}
-            className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)]" /* Blue button */
+            className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)]"
           >
             Add Community
           </button>
@@ -465,7 +465,7 @@ const SettingsPage = () => {
         {loadingCommunities ? <p className="text-black">Loading communities...</p> : (
           <ul className="space-y-2">
             {communities.map((community) => (
-              <li key={community.id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md"> {/* Lighter item background */}
+              <li key={community.id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md">
                 {editingCommunityId === community.id ? (
                   <input
                     type="text"
@@ -473,22 +473,22 @@ const SettingsPage = () => {
                     onChange={(e) => setEditingCommunityName(e.target.value)}
                     onBlur={() => handleSaveCommunityName(community.id)}
                     autoFocus
-                    className="flex-grow mr-2 px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]" /* Black text, blue focus */
+                    className="flex-grow mr-2 px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"
                   />
                 ) : (
-                  <span className="text-black">{community.name}</span> /* Black text */
+                  <span className="text-black">{community.name}</span>
                 )}
                 <div className="space-x-2">
                   {editingCommunityId === community.id ? (
-                    <button onClick={() => handleSaveCommunityName(community.id)} className="text-sm text-green-600 hover:text-green-700">Save</button> /* Green for save */
+                    <button onClick={() => handleSaveCommunityName(community.id)} className="text-sm text-green-600 hover:text-green-700">Save</button>
                   ) : (
-                    <button onClick={() => handleEditCommunity(community)} className="text-sm text-[var(--primary-blue)] hover:text-[var(--primary-blue-hover)]">Edit</button> /* Blue for edit */
+                    <button onClick={() => handleEditCommunity(community)} className="text-sm text-[var(--primary-blue)] hover:text-[var(--primary-blue-hover)]">Edit</button>
                   )}
-                  <button onClick={() => handleDeleteCommunity(community.id)} className="text-sm text-red-600 hover:text-red-700">Delete</button> /* Red for delete */
+                  <button onClick={() => handleDeleteCommunity(community.id)} className="text-sm text-red-600 hover:text-red-700">Delete</button>
                 </div>
               </li>
             ))}
-            {communities.length === 0 && !loadingCommunities && <p className="text-gray-700">No communities found. Add one above.</p>} {/* Lighter black text */}
+            {communities.length === 0 && !loadingCommunities && <p className="text-gray-700">No communities found. Add one above.</p>}
           </ul>
         )}
       </section>
