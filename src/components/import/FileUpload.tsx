@@ -47,16 +47,64 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onReset }) => 
           const worksheet = workbook.Sheets[firstSheetName];
           
           // Parse sheet to array of arrays, skipping first 9 rows
-          const jsonData: RawSheetData = XLSX.utils.sheet_to_json(worksheet, {
+          let jsonData: RawSheetData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             range: 9, // Start reading from the 10th row (0-indexed 9)
-          }) as RawSheetData; // Cast to ensure type compatibility
+            defval: null, // Ensure empty cells are consistently null
+          }) as RawSheetData;
 
           if (jsonData.length === 0) {
             setError('The uploaded file is empty or has no data starting from row 10.');
             setFileName(null);
-            event.target.value = ''; // Reset file input
+            event.target.value = '';
             return;
+          }
+
+          // Pre-filter entirely empty columns based on a sample of rows (e.g., first 20 data rows)
+          if (jsonData.length > 0) {
+            const numPreviewRowsToCheck = Math.min(jsonData.length, 20);
+            const sampleRows = jsonData.slice(0, numPreviewRowsToCheck);
+            const numOriginalColumns = sampleRows[0]?.length || 0;
+            const columnsToKeep: boolean[] = new Array(numOriginalColumns).fill(false);
+
+            for (let colIdx = 0; colIdx < numOriginalColumns; colIdx++) {
+              for (let rowIdx = 0; rowIdx < sampleRows.length; rowIdx++) {
+                const cellValue = sampleRows[rowIdx][colIdx];
+                if (cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== '') {
+                  columnsToKeep[colIdx] = true; // Mark column to keep if any cell in sample has data
+                  break;
+                }
+              }
+            }
+
+            const filteredJsonData = jsonData.map(row => {
+              return row.filter((_, colIdx) => columnsToKeep[colIdx]);
+            });
+            
+            // If all columns were filtered out (e.g., sheet was truly empty or only empty columns had data)
+            if (filteredJsonData.length > 0 && filteredJsonData[0].length === 0 && jsonData[0].length > 0) {
+                 setError('All columns appear to be empty in the first 20 data rows. Please check your file.');
+                 setFileName(null);
+                 event.target.value = '';
+                 return;
+            }
+            if (filteredJsonData.length === 0 && jsonData.length > 0) { // Should not happen if jsonData.length > 0
+                 setError('No data rows found after attempting to filter empty columns.');
+                 setFileName(null);
+                 event.target.value = '';
+                 return;
+            }
+
+            jsonData = filteredJsonData; // Use the filtered data
+          }
+          
+          // After filtering, if jsonData itself became empty (e.g. only one row which was all empty columns)
+          // or if the first row has no columns (meaning all columns were filtered out)
+          if (jsonData.length === 0 || (jsonData[0] && jsonData[0].length === 0) ) {
+             setError('The file contains no data in any columns after filtering empty ones, or all columns were empty.');
+             setFileName(null);
+             event.target.value = '';
+             return;
           }
 
           onFileProcessed(jsonData);
