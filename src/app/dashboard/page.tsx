@@ -210,8 +210,52 @@ const DashboardPage: React.FC = () => {
   }, [forecastRange, selectedCommunities, selectedCategory, inflationRate]); // Removed selectedStatus
 
   useEffect(() => {
+    // Initial forecast run when component mounts or dependencies of runForecast change
     runForecast();
-  }, [runForecast]);
+  }, [runForecast]); // runForecast itself has dependencies like forecastRange, selectedCommunities, selectedCategory, inflationRate
+
+  const handleRefreshForecast = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Re-fetch inflation rate
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'inflation_rate')
+        .single();
+      if (settingsError && settingsError.code !== 'PGRST116') { // PGRST116: "Searched item was not found"
+        console.warn('Error re-fetching inflation rate, using current value.');
+      } else if (settingsData) {
+        setInflationRate(parseFloat(settingsData.value) || 0.02);
+      } else {
+         setInflationRate(0.02); // Default if not found
+      }
+
+      // Re-fetch categories for pie chart and potentially other UI elements (runForecast fetches its own asset.categories.lifespan)
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name, lifespan');
+      if (categoriesError) {
+          console.warn('Error re-fetching categories.');
+      } else {
+          setAllCategories(categoriesData || []);
+      }
+      
+      // Now that inflationRate state (and allCategories if needed by UI elements directly) is updated,
+      // runForecast will be triggered by its own useEffect if inflationRate is a dependency,
+      // or we can call it explicitly. Since runForecast's dependencies include inflationRate,
+      // just updating the state should be enough.
+      // For explicitness and immediate effect if runForecast's deps are complex:
+      await runForecast();
+
+    } catch (err) {
+      console.error("Error during manual refresh:", err);
+      setError('Failed to refresh forecast data.');
+    } finally {
+      setLoading(false);
+    }
+  }, [runForecast]); // Add supabase if it were not stable, but it is. runForecast will be recreated if its own deps change.
 
 
   const handleExportToCSV = () => {
@@ -293,9 +337,10 @@ const DashboardPage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4">Capital Asset Forecast</h1>
 
       {/* Filters Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded shadow-sm">
-        <div>
-          <label htmlFor="forecastRange" className="block text-sm font-medium text-gray-700">Forecast Range (Years)</label>
+      <div className="mb-6 p-4 border rounded shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label htmlFor="forecastRange" className="block text-sm font-medium text-gray-700">Forecast Range (Years)</label>
           <select
             id="forecastRange"
             value={forecastRange}
@@ -349,6 +394,17 @@ const DashboardPage: React.FC = () => {
           </select>
         </div>
       </div>
+      <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleRefreshForecast}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-300"
+            disabled={loading}
+          >
+            {loading ? 'Refreshing...' : 'Refresh Forecast'}
+          </button>
+        </div>
+      </div>
+
 
       {loading && (
         <div className="flex justify-center items-center my-8">
