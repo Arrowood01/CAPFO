@@ -23,8 +23,8 @@ interface Community {
 interface AssetCategory {
   id: string; // Assuming UUID or similar
   name: string;
-  lifespan: number; // Matches DB
-  avg_replacement_cost: number; // Matches DB (after you add it)
+  lifespan: number | null; // Matches DB, can be null
+  avg_replacement_cost: number | null; // Matches DB, can be null
   // user_id: string; // If categories are user-specific
 }
 
@@ -565,8 +565,8 @@ const SettingsPage = () => {
                     ) : (
                       <>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-black">{category.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{category.lifespan}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${category.avg_replacement_cost.toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{category.lifespan !== null ? category.lifespan : 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{category.avg_replacement_cost !== null ? `$${category.avg_replacement_cost.toLocaleString()}` : 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <button onClick={() => handleEditCategory(category)} className="text-[var(--primary-blue)] hover:text-[var(--primary-blue-hover)]">Edit</button>
                           <button onClick={() => handleDeleteAssetCategory(category.id)} className="text-red-600 hover:text-red-700">Delete</button>
