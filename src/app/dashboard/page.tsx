@@ -16,8 +16,8 @@ interface DashboardAsset {
   install_date?: string;
   description?: string; // For asset name
   purchase_price?: number;
-  category: Array<{ id: string; name: string; lifespan: number }>; // Expect an array
-  community: Array<{ id: string; name: string }>; // Expect an array
+  categories?: { id: string; name: string; lifespan: number | null }; // Changed to object, matches typical Supabase FK response, allows null lifespan
+  communities?: { id: string; name: string }; // Changed to object
 }
 
 interface ForecastedAsset extends DashboardAsset { // Extended with forecast-specific fields
@@ -104,10 +104,10 @@ const DashboardPage: React.FC = () => {
           id,
           unit_number,
           install_date,
-          description, // Assuming 'description' is the asset name field
-          purchase_price, // Assuming 'purchase_price' is the cost field
-          category:categories (id, name, lifespan),
-          community:communities (id, name)
+          description,
+          purchase_price,
+          categories (id, name, lifespan), // Corrected select for FK
+          communities (id, name)          // Corrected select for FK
         `);
 
       if (selectedCommunities.length > 0) {
@@ -152,12 +152,12 @@ const DashboardPage: React.FC = () => {
         id: asset.id,
         name: asset.description || 'N/A', // Use description or a default
         install_date: asset.install_date || new Date().toISOString(), // Ensure valid date string
-        purchase_price: asset.purchase_price || 0, // Ensure valid price
-        category: { // For ForecastingAsset, which expects an object
-          name: asset.category[0]?.name || 'Unknown Category',
-          lifespan: asset.category[0]?.lifespan || 10, // Default lifespan
+        purchase_price: asset.purchase_price || 0,
+        category: {
+          name: asset.categories?.name || 'Unknown Category', // Use corrected field name 'categories' and direct property access
+          lifespan: asset.categories?.lifespan ?? 10, // Use nullish coalescing for default lifespan
         },
-        community: asset.community[0]?.name || 'Unknown Community', // For ForecastingAsset, which expects a string
+        community: asset.communities?.name || 'Unknown Community', // Use corrected field name 'communities'
       }));
 
       const forecastInput = {
@@ -189,10 +189,10 @@ const DashboardPage: React.FC = () => {
         }
         return {
           ...originalDashboardAsset, // Spread original details
-          id: fr.asset.id, // Ensure ID is from the forecast result's asset
+          id: fr.asset.id,
           description: fr.asset.name,
           purchase_price: fr.asset.purchase_price,
-          // category and community objects are already on originalDashboardAsset
+          // categories and communities objects are already on originalDashboardAsset
           replacement_year: fr.year,
           projected_cost: fr.cost,
         };
@@ -217,8 +217,8 @@ const DashboardPage: React.FC = () => {
   const handleExportToCSV = () => {
     const csvData = forecastedAssets.map(asset => ({
       'Unit #': asset.unit_number || 'N/A',
-      'Community': asset.community && asset.community[0]?.name || 'N/A',
-      'Category': asset.category && asset.category[0]?.name || 'N/A',
+      'Community': asset.communities?.name || 'N/A',
+      'Category': asset.categories?.name || 'N/A',
       'Replacement Year': asset.replacement_year,
       'Projected Cost': asset.projected_cost.toFixed(2),
     }));
@@ -262,12 +262,12 @@ const DashboardPage: React.FC = () => {
 
   const pieChartData = {
     labels: allCategories
-        .filter(cat => forecastedAssets.some(asset => asset.category && asset.category[0]?.id === cat.id))
+        .filter(cat => forecastedAssets.some(asset => asset.categories?.id === cat.id)) // Use corrected field name
         .map(cat => cat.name),
     datasets: [
       {
         data: [] as number[], // To be populated
-        backgroundColor: [ // Add more colors as needed
+        backgroundColor: [
           'rgba(255, 99, 132, 0.6)',
           'rgba(54, 162, 235, 0.6)',
           'rgba(255, 206, 86, 0.6)',
@@ -280,10 +280,10 @@ const DashboardPage: React.FC = () => {
   };
   // Populate pie chart data
   pieChartData.datasets[0].data = allCategories
-    .filter(cat => forecastedAssets.some(asset => asset.category && asset.category[0]?.id === cat.id))
+    .filter(cat => forecastedAssets.some(asset => asset.categories?.id === cat.id)) // Use corrected field name
     .map(cat =>
         forecastedAssets
-            .filter(asset => asset.category && asset.category[0]?.id === cat.id)
+            .filter(asset => asset.categories?.id === cat.id) // Use corrected field name
             .reduce((sum, asset) => sum + asset.projected_cost, 0)
   );
 
@@ -405,8 +405,8 @@ const DashboardPage: React.FC = () => {
                 {forecastedAssets.map(asset => (
                   <tr key={asset.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.unit_number || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.community && asset.community[0]?.name || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.category && asset.category[0]?.name || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.communities?.name || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.categories?.name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.replacement_year}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${asset.projected_cost.toFixed(2)}</td>
                   </tr>
