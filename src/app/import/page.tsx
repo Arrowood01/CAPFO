@@ -26,77 +26,7 @@ interface Category {
   // Add other category fields if needed
 }
 
-// Utility function to transform data based on mappings
-const transformData = (
-  data: RawSheetData,
-  mappings: Record<number, string>
-): TransformedSheetData => {
-  const outputKeys: Record<string, string> = {
-    'Make': 'make',
-    'Model': 'model',
-    'Serial Number': 'serial_number',
-    'Unit Number': 'unit_number',
-    'Purchase Price': 'purchase_price',
-    'Category': 'category_name',
-    'Install Date': 'install_date', // Added Install Date
-  };
-
-  return data.map((row) => {
-    const transformedRow: TransformedRow = {};
-    for (let currentColumnIndex = 0; currentColumnIndex < row.length; currentColumnIndex++) {
-      const userSelectedFieldForThisColumn = mappings[currentColumnIndex];
-
-      if (!userSelectedFieldForThisColumn || userSelectedFieldForThisColumn === 'Ignore' || userSelectedFieldForThisColumn === '') {
-        if (userSelectedFieldForThisColumn === 'Ignore') {
-            console.warn(`DEBUG: Skipping colIndex=${currentColumnIndex} because it was mapped to 'Ignore'. Raw data: ${row[currentColumnIndex]}`);
-        }
-        continue;
-      }
-
-      const internalFieldName = outputKeys[userSelectedFieldForThisColumn];
-
-      if (internalFieldName && row[currentColumnIndex] !== undefined && row[currentColumnIndex] !== null) {
-        let cellValue: string | number | null | Date = row[currentColumnIndex];
-
-        if (internalFieldName === 'purchase_price') {
-          const numValue = parseFloat(String(cellValue).replace(/[^0-9.-]+/g, ""));
-          cellValue = isNaN(numValue) ? String(cellValue) : numValue;
-        } else if (internalFieldName === 'install_date') {
-          if (typeof cellValue === 'number') {
-            const excelEpoch = new Date(1899, 11, 30);
-            const dateObj = new Date(excelEpoch.getTime() + cellValue * 24 * 60 * 60 * 1000);
-            if (!isNaN(dateObj.getTime())) {
-              cellValue = dateObj.toISOString().split('T')[0];
-            } else {
-              console.warn(`DEBUG: Could not parse Excel date number: ${row[currentColumnIndex]} for ${userSelectedFieldForThisColumn} at colIndex ${currentColumnIndex}`);
-              cellValue = String(row[currentColumnIndex]);
-            }
-          } else {
-            const dateObj = new Date(String(cellValue));
-            if (!isNaN(dateObj.getTime())) {
-              cellValue = dateObj.toISOString().split('T')[0];
-            } else {
-              console.warn(`DEBUG: Could not parse date string: "${row[currentColumnIndex]}" for ${userSelectedFieldForThisColumn} at colIndex ${currentColumnIndex}`);
-              cellValue = String(row[currentColumnIndex]);
-            }
-          }
-        } else if (internalFieldName === 'category_name') {
-          cellValue = String(cellValue);
-        }
-        
-        console.warn(
-            `DEBUG: Assigning to transformedRow: internalFieldName="${internalFieldName}", originalExcelColumnIndex=${currentColumnIndex}, userSelectedField="${userSelectedFieldForThisColumn}", rawValue="${row[currentColumnIndex]}", processedValue="${cellValue}"`
-        );
-        transformedRow[internalFieldName] = cellValue as string | number | null;
-
-      } else if (!internalFieldName && userSelectedFieldForThisColumn) {
-        console.warn(`DEBUG: No internalFieldName (outputKey) defined for userSelectedField: "${userSelectedFieldForThisColumn}" (from colIndex ${currentColumnIndex}). This column's data will be skipped.`);
-      }
-    }
-    return transformedRow;
-  }).filter(obj => Object.keys(obj).length > 0);
-};
-
+// Utility function to transform data based on mappings - will be moved into ImportPage component
 
 const ImportPage = () => {
   const [rawSheetData, setRawSheetData] = useState<RawSheetData | null>(null);
@@ -105,8 +35,98 @@ const ImportPage = () => {
   const [communities, setCommunities] = useState<Community[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
-  const [receivedMappingsDebug, setReceivedMappingsDebug] = useState<Record<number, string> | null>(null); // For debugging
-  // const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null); // Removed
+  const [receivedMappingsDebug, setReceivedMappingsDebug] = useState<Record<number, string> | null>(null);
+  const [transformDataLog, setTransformDataLog] = useState<string[]>([]); // New state for UI logging
+
+  const transformData = useCallback((data: RawSheetData, mappings: Record<number, string>): TransformedSheetData => {
+    const newLog: string[] = [];
+    newLog.push("transformData called. Mappings: " + JSON.stringify(mappings));
+
+    const outputKeys: Record<string, string> = {
+      'Make': 'make',
+      'Model': 'model',
+      'Serial Number': 'serial_number',
+      'Unit Number': 'unit_number',
+      'Purchase Price': 'purchase_price',
+      'Category': 'category_name',
+      'Install Date': 'install_date',
+    };
+
+    const processedData = data.map((row, rowIndex) => {
+      const transformedRow: TransformedRow = {};
+      newLog.push(`\nProcessing Excel Row ${rowIndex + 10}: [${row.join(', ')}]`);
+
+      for (let currentColumnIndex = 0; currentColumnIndex < row.length; currentColumnIndex++) {
+        const userSelectedFieldForThisColumn = mappings[currentColumnIndex];
+        const rawValueFromCell = row[currentColumnIndex];
+
+        if (!userSelectedFieldForThisColumn || userSelectedFieldForThisColumn === 'Ignore' || userSelectedFieldForThisColumn === '') {
+          if (userSelectedFieldForThisColumn === 'Ignore') {
+            newLog.push(`  [Col ${currentColumnIndex}]: Mapped to 'Ignore'. Raw data: "${rawValueFromCell}". SKIPPED.`);
+          } else if (userSelectedFieldForThisColumn === '') {
+            newLog.push(`  [Col ${currentColumnIndex}]: Not mapped (Select Field...). Raw data: "${rawValueFromCell}". SKIPPED.`);
+          }
+          continue;
+        }
+
+        const internalFieldName = outputKeys[userSelectedFieldForThisColumn];
+
+        if (internalFieldName && rawValueFromCell !== undefined && rawValueFromCell !== null) {
+          let cellValue: string | number | null | Date = rawValueFromCell;
+          let processingNotes = "";
+
+          if (internalFieldName === 'purchase_price') {
+            const numValue = parseFloat(String(cellValue).replace(/[^0-9.-]+/g, ""));
+            cellValue = isNaN(numValue) ? String(cellValue) : numValue;
+            processingNotes = ` (parsed as number: ${cellValue})`;
+          } else if (internalFieldName === 'install_date') {
+            if (typeof cellValue === 'number') {
+              const excelEpoch = new Date(1899, 11, 30);
+              const dateObj = new Date(excelEpoch.getTime() + cellValue * 24 * 60 * 60 * 1000);
+              if (!isNaN(dateObj.getTime())) {
+                cellValue = dateObj.toISOString().split('T')[0];
+                processingNotes = ` (parsed Excel date number to: ${cellValue})`;
+              } else {
+                processingNotes = ` (FAILED to parse Excel date number: ${rawValueFromCell})`;
+                cellValue = String(rawValueFromCell);
+              }
+            } else {
+              const dateObj = new Date(String(cellValue));
+              if (!isNaN(dateObj.getTime())) {
+                cellValue = dateObj.toISOString().split('T')[0];
+                processingNotes = ` (parsed date string to: ${cellValue})`;
+              } else {
+                processingNotes = ` (FAILED to parse date string: "${rawValueFromCell}")`;
+                cellValue = String(rawValueFromCell);
+              }
+            }
+          } else if (internalFieldName === 'category_name') {
+            cellValue = String(cellValue);
+            processingNotes = ` (ensured as string)`;
+          }
+          
+          newLog.push(
+              `  [Col ${currentColumnIndex}]: Mapped as "${userSelectedFieldForThisColumn}" -> internalKey "${internalFieldName}". Raw: "${rawValueFromCell}". Processed: "${cellValue}"${processingNotes}. ASSIGNED.`
+          );
+          transformedRow[internalFieldName] = cellValue as string | number | null;
+
+        } else if (!internalFieldName && userSelectedFieldForThisColumn) {
+          newLog.push(`  [Col ${currentColumnIndex}]: Mapped as "${userSelectedFieldForThisColumn}". No internalKey defined. Raw: "${rawValueFromCell}". SKIPPED.`);
+        } else {
+          newLog.push(`  [Col ${currentColumnIndex}]: Mapped as "${userSelectedFieldForThisColumn}". Raw: "${rawValueFromCell}". SKIPPED (null/undefined or no outputKey).`);
+        }
+      }
+      if(Object.keys(transformedRow).length > 0) {
+        newLog.push(`  End of Excel Row ${rowIndex + 10}. TransformedRow: ${JSON.stringify(transformedRow)}`);
+      } else {
+        newLog.push(`  End of Excel Row ${rowIndex + 10}. TransformedRow is EMPTY.`);
+      }
+      return transformedRow;
+    }).filter(obj => Object.keys(obj).length > 0);
+    
+    setTransformDataLog(newLog);
+    return processedData;
+  }, [setTransformDataLog]); // Dependency for useCallback
 
   useEffect(() => {
     const fetchData = async () => {
@@ -316,9 +336,19 @@ const ImportPage = () => {
         {/* Debug Display for Mappings */}
         {(currentStep === 'assign' || currentStep === 'preview') && receivedMappingsDebug && (
           <div className="my-4 p-4 border border-yellow-500 bg-yellow-50 rounded-md">
-            <h3 className="text-lg font-semibold text-yellow-700">Debug: Received Mappings</h3>
+            <h3 className="text-lg font-semibold text-yellow-700">Debug: Received Mappings from ColumnMapper</h3>
             <pre className="text-xs text-yellow-800 whitespace-pre-wrap break-all">
               {JSON.stringify(receivedMappingsDebug, null, 2)}
+            </pre>
+          </div>
+        )}
+
+        {/* New Debug Display for TransformData Log */}
+        {(currentStep === 'assign' || currentStep === 'preview') && transformDataLog.length > 0 && (
+          <div className="my-4 p-4 border border-cyan-500 bg-cyan-50 rounded-md">
+            <h3 className="text-lg font-semibold text-cyan-700">Debug: TransformData Execution Log</h3>
+            <pre className="text-xs text-cyan-800 whitespace-pre-wrap break-all" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {transformDataLog.join('\n')}
             </pre>
           </div>
         )}
