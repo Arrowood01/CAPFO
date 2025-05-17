@@ -124,6 +124,26 @@ const DashboardPage: React.FC = () => {
       const { data: supabaseAssetsData, error: assetsError } = await query;
       if (assetsError) throw assetsError;
 
+      // DEBUG LOG: Inspect fetched asset data, especially category lifespans
+      if (supabaseAssetsData && supabaseAssetsData.length > 0) {
+        console.log("DEBUG: Fetched supabaseAssetsData in runForecast (sample):", JSON.stringify(supabaseAssetsData.slice(0, 2), null, 2));
+        supabaseAssetsData.forEach((asset: any) => { // Use 'any' for asset here just for logging robustness
+          if (asset && asset.id) {
+            const categoryData = asset.categories; // Supabase might return it as 'categories' (plural) based on table name
+            if (categoryData && typeof categoryData === 'object' && !Array.isArray(categoryData)) {
+              console.log(`DEBUG: Asset ID ${asset.id}, Category: ${categoryData.name}, Fetched Lifespan: ${categoryData.lifespan}`);
+            } else if (asset.category && typeof asset.category === 'object' && !Array.isArray(asset.category)) {
+              // Fallback if the key was singular 'category' from an older select or different interpretation
+              console.log(`DEBUG: Asset ID ${asset.id}, Category (using .category): ${asset.category.name}, Fetched Lifespan: ${asset.category.lifespan}`);
+            } else {
+              console.log(`DEBUG: Asset ID ${asset.id} has no valid category object or it's an array. Category data:`, categoryData);
+            }
+          } else {
+            console.log("DEBUG: Encountered an asset without an ID or a null/undefined asset in supabaseAssetsData:", asset);
+          }
+        });
+      }
+
       if (!supabaseAssetsData || supabaseAssetsData.length === 0) {
         setForecastedAssets([]);
         setError("No assets found matching your criteria.");
