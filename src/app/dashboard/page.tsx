@@ -106,8 +106,8 @@ const DashboardPage: React.FC = () => {
           install_date,
           description,
           purchase_price,
-          categories (id, name, lifespan), // Corrected select for FK
-          communities (id, name)          // Corrected select for FK
+          categories (id, name, lifespan),
+          communities (id, name)
         `);
 
       if (selectedCommunities.length > 0) {
