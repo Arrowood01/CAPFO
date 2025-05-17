@@ -42,38 +42,48 @@ export const calculateFutureAssetCosts = (
   const endForecastYear = currentYear + forecastRangeInYears;
 
   assets.forEach((asset) => {
+    if (!asset || typeof asset.install_date !== 'string' || typeof asset.category?.lifespan !== 'number' || asset.category.lifespan <= 0) {
+      console.warn('Skipping asset due to invalid install_date, lifespan, or missing category:', asset);
+      return; // Skip this asset
+    }
+
     const installDate = new Date(asset.install_date);
+    if (isNaN(installDate.getTime())) {
+      console.warn(`Skipping asset due to invalid install_date format: ${asset.install_date}`, asset);
+      return; // Skip this asset
+    }
+    
     const installYear = installDate.getFullYear();
+    // Ensure lifespan is a positive number before calculation
+    if (asset.category.lifespan <= 0) {
+        console.warn(`Skipping asset due to non-positive lifespan: ${asset.category.lifespan}`, asset);
+        return;
+    }
     const replacementYear = installYear + asset.category.lifespan;
 
     // Only include assets whose replacement falls within the forecast range
-    if (replacementYear >= currentYear && replacementYear <= endForecastYear) {
-      // const yearsToReplacement = replacementYear - currentYear; // Unused
-      
-      // Simplified inflation calculation: Cost_future = Cost_present * (1 + r)^n
-      // A more precise calculation would compound inflation from purchase to replacement.
-      // For this, we'll calculate inflation from purchase year to replacement year.
-      // const yearsSincePurchaseToReplacement = replacementYear - installYear; // Unused, and is equivalent to asset.category.lifespan
-      
-      // Calculate inflated cost from original purchase price to the replacement year
+    // and ensure replacementYear is a valid number
+    if (!isNaN(replacementYear) && replacementYear >= currentYear && replacementYear <= endForecastYear) {
       let inflatedCost = asset.purchase_price;
+      // Ensure purchase_price is a valid number
+      if (typeof inflatedCost !== 'number' || isNaN(inflatedCost)) {
+          console.warn(`Invalid purchase_price for asset ${asset.id}: ${asset.purchase_price}. Defaulting to 0 for cost calculation.`);
+          inflatedCost = 0;
+      }
+
       for (let i = 0; i < asset.category.lifespan; i++) {
         inflatedCost *= (1 + globalInflationRate);
       }
       
-      // If we want to inflate from "today" to "replacementYear" for an item replaced in the future:
-      // This interpretation seems more aligned with "future cost from today's perspective"
-      // However, the formula "install_date + lifespan" implies the replacement is at that fixed future point,
-      // and its cost should be the original cost inflated over its lifespan.
-      // Let's stick to inflating the original purchase_price over its lifespan.
-
       forecastedReplacements.push({
         year: replacementYear,
-        cost: parseFloat(inflatedCost.toFixed(2)), // Round to 2 decimal places
+        cost: parseFloat(inflatedCost.toFixed(2)),
         category: asset.category.name,
         community: asset.community,
         asset: asset,
       });
+    } else if (isNaN(replacementYear)) {
+        console.warn(`Skipping asset due to NaN replacementYear (likely from invalid install_date or lifespan). Asset ID: ${asset.id}, Install Date: ${asset.install_date}, Lifespan: ${asset.category.lifespan}`);
     }
   });
 
