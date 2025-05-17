@@ -163,7 +163,7 @@ const ImportPage = () => {
       setTransformedData(transformed);
       setCurrentStep('assign'); // Change to 'assign' step after mapping
     },
-    []
+    [transformData] // Added transformData to dependency array
   );
 
   const handleAssignConfirm = useCallback(() => {
