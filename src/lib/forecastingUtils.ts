@@ -6,10 +6,11 @@ export interface Asset {
   install_date: string; // ISO date string, e.g., "2020-01-15"
   purchase_price: number;
   category: {
-    name: string; // e.g., "HVAC", "Roofing"
+    name: string;
     lifespan: number; // in years
+    avg_replacement_cost: number; // Added from settings
   };
-  community: string; // e.g., "Greenwood Apts"
+  community: string;
   // Add any other relevant asset properties here
 }
 
@@ -64,23 +65,32 @@ export const calculateFutureAssetCosts = (
     // Only include assets whose replacement falls within the forecast range
     // and ensure replacementYear is a valid number
     if (!isNaN(replacementYear) && replacementYear >= currentYear && replacementYear <= endForecastYear) {
-      let inflatedCost = asset.purchase_price;
-      // Ensure purchase_price is a valid number
-      if (typeof inflatedCost !== 'number' || isNaN(inflatedCost)) {
-          console.warn(`Invalid purchase_price for asset ${asset.id}: ${asset.purchase_price}. Defaulting to 0 for cost calculation.`);
-          inflatedCost = 0;
+      // Use category's average replacement cost as the base.
+      // This is assumed to be its replacement cost if replaced *today*.
+      let futureCost = asset.category.avg_replacement_cost;
+
+      // Ensure avg_replacement_cost is a valid number
+      if (typeof futureCost !== 'number' || isNaN(futureCost) || futureCost < 0) {
+          console.warn(`Invalid avg_replacement_cost for category ${asset.category.name} (asset ${asset.id}): ${asset.category.avg_replacement_cost}. Defaulting to 0 for cost calculation.`);
+          futureCost = 0;
       }
 
-      for (let i = 0; i < asset.category.lifespan; i++) {
-        inflatedCost *= (1 + globalInflationRate);
+      // Calculate how many years from currentYear to replacementYear to inflate.
+      const yearsToInflate = replacementYear - currentYear;
+
+      if (yearsToInflate > 0) {
+        for (let i = 0; i < yearsToInflate; i++) {
+          futureCost *= (1 + globalInflationRate);
+        }
       }
+      // If yearsToInflate is 0 (replacement is current year), futureCost remains asset.category.avg_replacement_cost.
       
       forecastedReplacements.push({
         year: replacementYear,
-        cost: parseFloat(inflatedCost.toFixed(2)),
+        cost: parseFloat(futureCost.toFixed(2)),
         category: asset.category.name,
         community: asset.community,
-        asset: asset,
+        asset: asset, // asset still contains original purchase_price, category.lifespan, etc. for reference
       });
     } else if (isNaN(replacementYear)) {
         console.warn(`Skipping asset due to NaN replacementYear (likely from invalid install_date or lifespan). Asset ID: ${asset.id}, Install Date: ${asset.install_date}, Lifespan: ${asset.category.lifespan}`);

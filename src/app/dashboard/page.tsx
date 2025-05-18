@@ -16,8 +16,8 @@ interface DashboardAsset {
   install_date?: string;
   description?: string; // For asset name
   purchase_price?: number;
-  categories?: { id: string; name: string; lifespan: number | null }; // Changed to object, matches typical Supabase FK response, allows null lifespan
-  communities?: { id: string; name: string }; // Changed to object
+  categories?: { id: string; name: string; lifespan: number | null; avg_replacement_cost: number | null }; // Added avg_replacement_cost
+  communities?: { id: string; name: string };
 }
 
 interface ForecastedAsset extends DashboardAsset { // Extended with forecast-specific fields
@@ -106,7 +106,7 @@ const DashboardPage: React.FC = () => {
           install_date,
           description,
           purchase_price,
-          categories (id, name, lifespan),
+          categories (id, name, lifespan, avg_replacement_cost), // Added avg_replacement_cost
           communities (id, name)
         `);
 
@@ -178,10 +178,11 @@ const DashboardPage: React.FC = () => {
         install_date: asset.install_date || new Date().toISOString(), // Ensure valid date string
         purchase_price: asset.purchase_price || 0,
         category: {
-          name: asset.categories?.name || 'Unknown Category', // Use corrected field name 'categories' and direct property access
-          lifespan: asset.categories?.lifespan ?? 10, // Use nullish coalescing for default lifespan
+          name: asset.categories?.name || 'Unknown Category',
+          lifespan: asset.categories?.lifespan ?? 10,
+          avg_replacement_cost: asset.categories?.avg_replacement_cost ?? 0, // Pass avg_replacement_cost, default to 0 if null/undefined
         },
-        community: asset.communities?.name || 'Unknown Community', // Use corrected field name 'communities'
+        community: asset.communities?.name || 'Unknown Community',
       }));
 
       const forecastInput = {
