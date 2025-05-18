@@ -116,30 +116,56 @@ const SettingsPage = () => {
     }
 
     setLoadingInflation(true);
+    const valueToSave = (rateValue / 100).toString();
+    console.log(`[SETTINGS_INFLATION_SAVE] Attempting to save inflation. Current settingsId: ${settingsId}, Value to save (decimal string): ${valueToSave}`);
+
     try {
       if (settingsId) { // If ID exists, update
-        const { error: updateError } = await supabase
+        console.log(`[SETTINGS_INFLATION_SAVE] Updating existing record ID: ${settingsId}`);
+        const { data: updatedResult, error: updateError } = await supabase
           .from('settings')
-          .update({ value: (rateValue / 100).toString() }) // Update the 'value' column
-          .eq('id', settingsId);
-        if (updateError) throw updateError;
-        setInitialInflationRate(rateValue);
-        showToast('Inflation rate updated successfully!', 'success');
+          .update({ value: valueToSave })
+          .eq('id', settingsId)
+          .select('id, value')
+          .single();
+
+        if (updateError) {
+          console.error('[SETTINGS_INFLATION_SAVE] Supabase error updating inflation rate:', JSON.stringify(updateError));
+          throw updateError;
+        }
+        console.log('[SETTINGS_INFLATION_SAVE] Supabase response from inflation update:', JSON.stringify(updatedResult));
+        if (updatedResult) {
+            setInitialInflationRate(rateValue); // rateValue is already in percentage form for UI
+            showToast('Inflation rate updated successfully!', 'success');
+        } else {
+            console.warn('[SETTINGS_INFLATION_SAVE] Inflation rate update did not return data. Check RLS or if ID was correct.');
+            showToast('Inflation rate update processed (check DB).', 'success'); // Optimistic
+            setInitialInflationRate(rateValue); // Optimistic
+        }
       } else { // No ID, so try to insert
+        console.log('[SETTINGS_INFLATION_SAVE] Inserting new inflation rate record.');
         const { data: insertData, error: insertError } = await supabase
           .from('settings')
-          .insert({ key: 'inflation_rate', value: (rateValue / 100).toString() }) // Insert key and value
-          .select('id')
+          .insert({ key: 'inflation_rate', value: valueToSave })
+          .select('id, value')
           .single();
-        if (insertError) throw insertError;
+
+        if (insertError) {
+          console.error('[SETTINGS_INFLATION_SAVE] Supabase error inserting inflation rate:', JSON.stringify(insertError));
+          throw insertError;
+        }
+        console.log('[SETTINGS_INFLATION_SAVE] Supabase response from inflation insert:', JSON.stringify(insertData));
         if (insertData) {
           setSettingsId(insertData.id);
-          setInitialInflationRate(rateValue);
+          setInitialInflationRate(rateValue); // rateValue is already in percentage form for UI
           showToast('Inflation rate created successfully!', 'success');
+        } else {
+            console.warn('[SETTINGS_INFLATION_SAVE] Inflation rate insert did not return data.');
+            showToast('Inflation rate creation processed (check DB).', 'success'); // Optimistic
         }
       }
     } catch (error: unknown) {
-      console.error('Error saving inflation rate:', error);
+      console.error('[SETTINGS_INFLATION_SAVE] Error in updateInflationRate catch block:', error);
       if (error instanceof Error) {
         showToast(`Error saving inflation rate: ${error.message}`, 'error');
       } else {
