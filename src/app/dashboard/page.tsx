@@ -106,7 +106,7 @@ const DashboardPage: React.FC = () => {
           install_date,
           description,
           purchase_price,
-          categories (id, name, lifespan, avg_replacement_cost), // Added avg_replacement_cost
+          categories (id, name, lifespan, avg_replacement_cost),
           communities (id, name)
         `);
 
