@@ -39,7 +39,7 @@ interface AssetCategoryFormState {
 const SettingsPage = () => {
   const [inflationRate, setInflationRate] = useState<number | string>('');
   const [initialInflationRate, setInitialInflationRate] = useState<number | null>(null);
-  const [settingsId, setSettingsId] = useState<string | null>(null); // DB ID is UUID (string)
+  // const [settingsId, setSettingsId] = useState<string | null>(null); // No longer needed with upsert
   const [loadingInflation, setLoadingInflation] = useState(true);
 
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -75,11 +75,11 @@ const SettingsPage = () => {
         const rate = parseFloat(data.value);
         setInflationRate(isNaN(rate) ? 0 : rate * 100);
         setInitialInflationRate(isNaN(rate) ? 0 : rate * 100);
-        setSettingsId(data.id);
+        // setSettingsId(data.id); // ID is not directly used for upsert logic by 'key'
       } else {
         setInflationRate(0);
         setInitialInflationRate(0);
-        setSettingsId(null);
+        // setSettingsId(null);
         console.log('No global inflation rate setting found in DB. User can create one.');
         // showToast('No global inflation rate found. Please set one.', 'error'); // Optional: prompt user
       }
@@ -92,7 +92,7 @@ const SettingsPage = () => {
       }
       setInflationRate(0);
       setInitialInflationRate(0);
-      setSettingsId(null);
+      // setSettingsId(null);
     } finally {
       setLoadingInflation(false);
     }
@@ -134,7 +134,7 @@ const SettingsPage = () => {
       console.log('[SETTINGS_INFLATION_SAVE] Supabase response from inflation upsert:', JSON.stringify(upsertedData));
 
       if (upsertedData) {
-        setSettingsId(upsertedData.id);
+        // setSettingsId(upsertedData.id); // ID from upsert is available if needed, but not for this logic
         setInitialInflationRate(rateValue); // rateValue is already in percentage form for UI
         showToast('Inflation rate saved successfully!', 'success');
       } else {
