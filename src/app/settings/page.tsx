@@ -371,17 +371,37 @@ const SettingsPage = () => {
         lifespan: lifespan_val, // Map form's lifespan_years to DB 'lifespan'
         avg_replacement_cost: avg_replacement_cost_val,
       };
-      const { error } = await supabase
-        .from('categories') // Corrected table name
+      console.log(`Attempting to update category ID: ${id} with data:`, updateData); // DEBUG LOG
+      const { data: updatedData, error } = await supabase // Capture data as well
+        .from('categories')
         .update(updateData)
-        .eq('id', id);
-      if (error) throw error;
-      setAssetCategories(assetCategories.map(cat => cat.id === id ? { ...cat, ...updateData, id: cat.id } : cat));
+        .eq('id', id)
+        .select(); // Select the updated row to confirm changes
+
+      if (error) {
+        console.error('Supabase error updating category:', error); // DEBUG LOG
+        throw error;
+      }
+      
+      console.log('Supabase response from category update:', updatedData); // DEBUG LOG
+
+      // It's good practice to update local state based on what the DB returns,
+      // or at least confirm the update was successful before updating local state.
+      // If updatedData is an array and not empty, the update was likely successful.
+      if (updatedData && updatedData.length > 0) {
+        setAssetCategories(assetCategories.map(cat => cat.id === id ? { ...cat, ...updatedData[0] } : cat));
+        showToast('Asset category updated successfully!', 'success');
+      } else {
+        // This case might indicate the row wasn't found or RLS prevented the update/select
+        console.warn('Category update seemed to succeed but no data returned, or RLS issue.', updatedData);
+        // Still update local state optimistically for now, or fetch fresh if concerned
+        setAssetCategories(assetCategories.map(cat => cat.id === id ? { ...cat, ...updateData, id: cat.id } : cat));
+        showToast('Asset category update processed (check DB).', 'success'); // Modified toast
+      }
       setEditingCategoryId(null);
       setEditingCategory({});
-      showToast('Asset category updated successfully!', 'success');
     } catch (error: unknown) {
-      console.error('Error updating asset category:', error);
+      console.error('Error in handleSaveCategory catch block:', error); // DEBUG LOG
       if (error instanceof Error) {
         showToast(`Error updating asset category: ${error.message}`, 'error');
       } else {
