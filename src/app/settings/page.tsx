@@ -371,37 +371,42 @@ const SettingsPage = () => {
         lifespan: lifespan_val, // Map form's lifespan_years to DB 'lifespan'
         avg_replacement_cost: avg_replacement_cost_val,
       };
-      console.log(`Attempting to update category ID: ${id} with data:`, updateData); // DEBUG LOG
-      const { data: updatedData, error } = await supabase // Capture data as well
+      console.log(`[SETTINGS_SAVE_CATEGORY] Attempting to update category ID: ${id} with data:`, JSON.stringify(updateData));
+      const { data: updatedDataResult, error: updateError } = await supabase
         .from('categories')
         .update(updateData)
         .eq('id', id)
-        .select(); // Select the updated row to confirm changes
+        .select();
 
-      if (error) {
-        console.error('Supabase error updating category:', error); // DEBUG LOG
-        throw error;
+      if (updateError) {
+        console.error('[SETTINGS_SAVE_CATEGORY] Supabase error during category update:', JSON.stringify(updateError));
+        showToast(`Error updating category: ${updateError.message}`, 'error');
+        // Do not update local state if DB update failed
+        return; // Stop further processing in this function
       }
       
-      console.log('Supabase response from category update:', updatedData); // DEBUG LOG
+      console.log('[SETTINGS_SAVE_CATEGORY] Supabase response from category update (data):', JSON.stringify(updatedDataResult));
 
-      // It's good practice to update local state based on what the DB returns,
-      // or at least confirm the update was successful before updating local state.
-      // If updatedData is an array and not empty, the update was likely successful.
-      if (updatedData && updatedData.length > 0) {
-        setAssetCategories(assetCategories.map(cat => cat.id === id ? { ...cat, ...updatedData[0] } : cat));
+      if (updatedDataResult && updatedDataResult.length > 0) {
+        console.log('[SETTINGS_SAVE_CATEGORY] Update successful, returned data:', JSON.stringify(updatedDataResult[0]));
+        // Update local state with the confirmed data from the database
+        setAssetCategories(prevCategories =>
+          prevCategories.map(cat =>
+            cat.id === id ? { ...cat, ...updatedDataResult[0] } : cat
+          )
+        );
         showToast('Asset category updated successfully!', 'success');
       } else {
-        // This case might indicate the row wasn't found or RLS prevented the update/select
-        console.warn('Category update seemed to succeed but no data returned, or RLS issue.', updatedData);
-        // Still update local state optimistically for now, or fetch fresh if concerned
-        setAssetCategories(assetCategories.map(cat => cat.id === id ? { ...cat, ...updateData, id: cat.id } : cat));
-        showToast('Asset category update processed (check DB).', 'success'); // Modified toast
+        console.warn('[SETTINGS_SAVE_CATEGORY] Category update did not return data. This could mean the ID was not found, or RLS prevented the update/select. No rows were updated in the database. Update object was:', JSON.stringify(updateData));
+        showToast('Category not found or update prevented (possibly RLS). Data not saved to DB.', 'error');
+        // Optionally, re-fetch categories to ensure UI consistency if concerned about optimistic updates
+        // fetchAssetCategories();
       }
+      
       setEditingCategoryId(null);
       setEditingCategory({});
-    } catch (error: unknown) {
-      console.error('Error in handleSaveCategory catch block:', error); // DEBUG LOG
+    } catch (error: unknown) { // This catch block might not be reached if Supabase client doesn't throw for RLS "0 rows updated"
+      console.error('[SETTINGS_SAVE_CATEGORY] Unexpected error in handleSaveCategory catch block:', error);
       if (error instanceof Error) {
         showToast(`Error updating asset category: ${error.message}`, 'error');
       } else {
