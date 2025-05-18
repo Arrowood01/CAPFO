@@ -127,16 +127,20 @@ const DashboardPage: React.FC = () => {
       // DEBUG LOG: Inspect fetched asset data, especially category lifespans
       if (supabaseAssetsData && supabaseAssetsData.length > 0) {
         console.log("DEBUG: Fetched supabaseAssetsData in runForecast (sample):", JSON.stringify(supabaseAssetsData.slice(0, 2), null, 2));
-        supabaseAssetsData.forEach((asset: any) => { // Use 'any' for asset here just for logging robustness
+        // Define a more specific type for items in supabaseAssetsData for logging purposes
+        type SupabaseAssetLogItem = {
+          id?: string;
+          categories?: { name?: string; lifespan?: number | null };
+          // Add other potential fields if needed for robust logging, or keep it minimal
+        };
+
+        (supabaseAssetsData as SupabaseAssetLogItem[]).forEach(asset => {
           if (asset && asset.id) {
-            const categoryData = asset.categories; // Supabase might return it as 'categories' (plural) based on table name
+            const categoryData = asset.categories;
             if (categoryData && typeof categoryData === 'object' && !Array.isArray(categoryData)) {
-              console.log(`DEBUG: Asset ID ${asset.id}, Category: ${categoryData.name}, Fetched Lifespan: ${categoryData.lifespan}`);
-            } else if (asset.category && typeof asset.category === 'object' && !Array.isArray(asset.category)) {
-              // Fallback if the key was singular 'category' from an older select or different interpretation
-              console.log(`DEBUG: Asset ID ${asset.id}, Category (using .category): ${asset.category.name}, Fetched Lifespan: ${asset.category.lifespan}`);
+              console.log(`DEBUG: Asset ID ${asset.id}, Category: ${categoryData.name ?? 'N/A'}, Fetched Lifespan: ${categoryData.lifespan ?? 'N/A'}`);
             } else {
-              console.log(`DEBUG: Asset ID ${asset.id} has no valid category object or it's an array. Category data:`, categoryData);
+              console.log(`DEBUG: Asset ID ${asset.id} has no valid category object. Category data:`, categoryData);
             }
           } else {
             console.log("DEBUG: Encountered an asset without an ID or a null/undefined asset in supabaseAssetsData:", asset);
