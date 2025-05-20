@@ -17,6 +17,7 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
 interface Community {
   id: string; // Assuming UUID or similar from Supabase
   name: string;
+  unit_count?: number | null; // Number of units in the community
   // user_id: string; // If communities are user-specific
 }
 
@@ -44,8 +45,10 @@ const SettingsPage = () => {
 
   const [communities, setCommunities] = useState<Community[]>([]);
   const [editingCommunityId, setEditingCommunityId] = useState<string | null>(null);
-  const [editingCommunityName, setEditingCommunityName] = useState('');
-  const [newCommunityName, setNewCommunityName] = useState('');
+  // State for editing a community, now an object
+  const [editingCommunityData, setEditingCommunityData] = useState<{ name: string; unit_count: string | number | null }>({ name: '', unit_count: '' });
+  // State for a new community, now an object
+  const [newCommunityData, setNewCommunityData] = useState<{ name: string; unit_count: string | number }>({ name: '', unit_count: '' });
   const [loadingCommunities, setLoadingCommunities] = useState(true);
 
   const [assetCategories, setAssetCategories] = useState<AssetCategory[]>([]);
@@ -163,7 +166,8 @@ const SettingsPage = () => {
   const fetchCommunities = useCallback(async () => {
     setLoadingCommunities(true);
     try {
-      const { data, error } = await supabase.from('communities').select('*').order('name');
+      // Fetch unit_count along with other community data
+      const { data, error } = await supabase.from('communities').select('id, name, unit_count').order('name');
       if (error) throw error;
       setCommunities(data || []);
     } catch (error: unknown) {
@@ -183,24 +187,45 @@ const SettingsPage = () => {
   }, [fetchCommunities]);
 
   const handleAddCommunity = async () => {
-    if (!newCommunityName.trim()) {
+    const name = newCommunityData.name.trim();
+    const unitCountStr = String(newCommunityData.unit_count).trim();
+
+    if (!name) {
       showToast('Community name cannot be empty.', 'error');
       return;
     }
-    const sessionData = await supabase.auth.getSession();
-    console.log('Current user session for add community:', sessionData);
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log('Current user for add community:', user);
+
+    let unit_count: number | null = null;
+    if (unitCountStr !== '') {
+      const parsedUnits = parseInt(unitCountStr, 10);
+      if (isNaN(parsedUnits) || parsedUnits < 0) {
+        showToast('Number of units must be a non-negative integer.', 'error');
+        return;
+      }
+      unit_count = parsedUnits;
+    }
+
+    // const sessionData = await supabase.auth.getSession(); // Not strictly needed for this operation if RLS handles auth
+    // console.log('Current user session for add community:', sessionData);
+    // const { data: { user } } = await supabase.auth.getUser(); // Not strictly needed
+    // console.log('Current user for add community:', user);
+
     try {
+      const communityPayload: { name: string; unit_count?: number | null } = { name };
+      if (unit_count !== null) {
+        communityPayload.unit_count = unit_count;
+      }
+
       const { data, error } = await supabase
         .from('communities')
-        .insert([{ name: newCommunityName.trim() }])
-        .select()
+        .insert([communityPayload])
+        .select('id, name, unit_count') // Ensure unit_count is selected back
         .single();
+
       if (error) throw error;
       if (data) {
         setCommunities([...communities, data]);
-        setNewCommunityName('');
+        setNewCommunityData({ name: '', unit_count: '' }); // Reset form
         showToast('Community added successfully!', 'success');
       }
     } catch (error: unknown) {
@@ -215,23 +240,56 @@ const SettingsPage = () => {
 
   const handleEditCommunity = (community: Community) => {
     setEditingCommunityId(community.id);
-    setEditingCommunityName(community.name);
+    setEditingCommunityData({ name: community.name, unit_count: community.unit_count ?? '' });
   };
 
-  const handleSaveCommunityName = async (id: string) => {
-    if (!editingCommunityName.trim()) {
+  // Renamed from handleSaveCommunityName to handleSaveCommunity
+  const handleSaveCommunity = async (id: string) => {
+    const name = editingCommunityData.name.trim();
+    const unitCountStr = String(editingCommunityData.unit_count).trim();
+
+    if (!name) {
       showToast('Community name cannot be empty.', 'error');
       return;
     }
+
+    let unit_count: number | null = null;
+    if (unitCountStr !== '') {
+      const parsedUnits = parseInt(unitCountStr, 10);
+      if (isNaN(parsedUnits) || parsedUnits < 0) {
+        showToast('Number of units must be a non-negative integer.', 'error');
+        return;
+      }
+      unit_count = parsedUnits;
+    }
+    
     try {
-      const { error } = await supabase
+      const communityPayload: { name: string; unit_count?: number | null } = { name };
+      // Only include unit_count in the payload if it's explicitly set or changed to null
+      // If unitCountStr is empty, it means user wants to set it to null (if field was previously populated)
+      // or keep it null (if field was already null/empty)
+      if (unitCountStr === '' || unit_count !== null) {
+         communityPayload.unit_count = unit_count;
+      }
+
+
+      const { data: updatedCommunity, error } = await supabase
         .from('communities')
-        .update({ name: editingCommunityName.trim() })
-        .eq('id', id);
+        .update(communityPayload)
+        .eq('id', id)
+        .select('id, name, unit_count') // Select back the updated data
+        .single();
+
       if (error) throw error;
-      setCommunities(communities.map(c => c.id === id ? { ...c, name: editingCommunityName.trim() } : c));
-      setEditingCommunityId(null);
-      showToast('Community updated successfully!', 'success');
+
+      if (updatedCommunity) {
+        setCommunities(communities.map(c => c.id === id ? updatedCommunity : c));
+        setEditingCommunityId(null);
+        setEditingCommunityData({ name: '', unit_count: '' }); // Reset edit form
+        showToast('Community updated successfully!', 'success');
+      } else {
+        showToast('Failed to get updated community data.', 'error');
+      }
     } catch (error: unknown) {
       console.error('Error updating community:', error);
       if (error instanceof Error) {
@@ -479,17 +537,25 @@ const SettingsPage = () => {
       {/* Manage Communities Section */}
       <section className="p-6 bg-white shadow-lg rounded-lg border border-[var(--border-blue)]"> {/* Blue border */}
         <h2 className="text-xl font-semibold text-black mb-4">Manage Communities</h2> {/* Black text */}
-        <div className="mb-4 flex space-x-2">
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
           <input
             type="text"
-            value={newCommunityName}
-            onChange={(e) => setNewCommunityName(e.target.value)}
+            value={newCommunityData.name}
+            onChange={(e) => setNewCommunityData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="New community name"
-            className="flex-grow mt-1 block px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+            className="md:col-span-1 mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+          />
+          <input
+            type="number"
+            value={newCommunityData.unit_count}
+            onChange={(e) => setNewCommunityData(prev => ({ ...prev, unit_count: e.target.value === '' ? '' : parseInt(e.target.value, 10) }))}
+            placeholder="Number of Units (optional)"
+            min="0"
+            className="md:col-span-1 mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
           />
           <button
             onClick={handleAddCommunity}
-            className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)]"
+            className="md:col-span-1 px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)]"
           >
             Add Community
           </button>
@@ -497,27 +563,40 @@ const SettingsPage = () => {
         {loadingCommunities ? <p className="text-black">Loading communities...</p> : (
           <ul className="space-y-2">
             {communities.map((community) => (
-              <li key={community.id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md">
+              <li key={community.id} className="p-3 bg-gray-50 border border-gray-200 rounded-md">
                 {editingCommunityId === community.id ? (
-                  <input
-                    type="text"
-                    value={editingCommunityName}
-                    onChange={(e) => setEditingCommunityName(e.target.value)}
-                    onBlur={() => handleSaveCommunityName(community.id)}
-                    autoFocus
-                    className="flex-grow mr-2 px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"
-                  />
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={editingCommunityData.name}
+                      onChange={(e) => setEditingCommunityData(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"
+                    />
+                    <input
+                      type="number"
+                      value={editingCommunityData.unit_count ?? ''}
+                      onChange={(e) => setEditingCommunityData(prev => ({ ...prev, unit_count: e.target.value === '' ? null : parseInt(e.target.value, 10) }))}
+                      placeholder="Number of Units (optional)"
+                      min="0"
+                      className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"
+                    />
+                    <div className="flex space-x-2 justify-end">
+                      <button onClick={() => handleSaveCommunity(community.id)} className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600">Save</button>
+                      <button onClick={() => setEditingCommunityId(null)} className="px-3 py-1 bg-gray-400 text-white rounded-md hover:bg-gray-500">Cancel</button>
+                    </div>
+                  </div>
                 ) : (
-                  <span className="text-black">{community.name}</span>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-black font-medium">{community.name}</span>
+                      <span className="text-sm text-gray-600 ml-2">(Units: {community.unit_count ?? 'N/A'})</span>
+                    </div>
+                    <div className="space-x-2">
+                      <button onClick={() => handleEditCommunity(community)} className="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">Edit</button>
+                      <button onClick={() => handleDeleteCommunity(community.id)} className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600">Delete</button>
+                    </div>
+                  </div>
                 )}
-                <div className="space-x-2">
-                  {editingCommunityId === community.id ? (
-                    <button onClick={() => handleSaveCommunityName(community.id)} className="text-sm text-green-600 hover:text-green-700">Save</button>
-                  ) : (
-                    <button onClick={() => handleEditCommunity(community)} className="text-sm text-[var(--primary-blue)] hover:text-[var(--primary-blue-hover)]">Edit</button>
-                  )}
-                  <button onClick={() => handleDeleteCommunity(community.id)} className="text-sm text-red-600 hover:text-red-700">Delete</button>
-                </div>
               </li>
             ))}
             {communities.length === 0 && !loadingCommunities && <p className="text-gray-700">No communities found. Add one above.</p>}
@@ -528,51 +607,56 @@ const SettingsPage = () => {
       {/* Manage Asset Categories Section */}
       <section className="p-6 bg-white shadow-lg rounded-lg border border-[var(--border-blue)]"> {/* Blue border */}
         <h2 className="text-xl font-semibold text-black mb-4">Manage Asset Categories</h2> {/* Black text */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border border-gray-300 rounded-md bg-gray-50"> {/* Lighter background for form area */}
-          <input
-            type="text"
-            name="name"
-            value={newCategory.name || ''}
-            onChange={handleNewCategoryChange}
-            placeholder="Category Name"
-            className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
-          />
-          <input
-            type="number"
-            name="lifespan_years" // Corresponds to AssetCategoryFormState
-            value={newCategory.lifespan_years || ''}
-            onChange={handleNewCategoryChange}
-            placeholder="Lifespan (Years)"
-            min="0"
-            className="mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
-          />
-          <input
-            type="number"
-            name="avg_replacement_cost"
-            value={newCategory.avg_replacement_cost || ''}
-            onChange={handleNewCategoryChange}
-            placeholder="Avg. Replacement Cost"
-            min="0"
-            step="0.01"
-            className="mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
-          />
-          <button
-            onClick={handleAddAssetCategory}
-            className="md:col-span-4 mt-2 px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)] w-full" /* Blue button */
-          >
-            Add Category
-          </button>
+        {/* Add New Category Form */}
+        <div className="mb-6 p-4 border border-gray-200 rounded-lg">
+          <h3 className="text-lg font-medium text-black mb-2">Add New Category</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <input
+              type="text"
+              name="name"
+              value={newCategory.name || ''}
+              onChange={handleNewCategoryChange}
+              placeholder="Category Name"
+              className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+            />
+            <input
+              type="number"
+              name="lifespan_years"
+              value={newCategory.lifespan_years || ''}
+              onChange={handleNewCategoryChange}
+              placeholder="Lifespan (Years)"
+              min="0"
+              className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+            />
+            <input
+              type="number"
+              name="avg_replacement_cost"
+              value={newCategory.avg_replacement_cost || ''}
+              onChange={handleNewCategoryChange}
+              placeholder="Avg. Replacement Cost ($)"
+              min="0"
+              step="0.01"
+              className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+            />
+            <button
+              onClick={handleAddAssetCategory}
+              className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)]"
+            >
+              Add Category
+            </button>
+          </div>
         </div>
 
-        {loadingCategories ? <p className="text-black">Loading categories...</p> : (
+        {/* Categories List/Table */}
+        {loadingCategories ? <p className="text-black">Loading asset categories...</p> : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-300 border border-gray-300"> {/* Adjusted border color */}
               <thead className="bg-gray-100"> {/* Lighter gray for table head */}
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Lifespan (Years)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Avg. Replacement Cost</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Actions</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Lifespan (Yrs)</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Avg. Cost ($)</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -581,35 +665,39 @@ const SettingsPage = () => {
                     {editingCategoryId === category.id ? (
                       <>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="text" name="name" value={editingCategory.name || ''} onChange={handleEditingCategoryChange} className="w-full px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
+                          <input type="text" name="name" value={editingCategory.name || ''} onChange={handleEditingCategoryChange} className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="number" name="lifespan_years" value={editingCategory.lifespan_years || ''} onChange={handleEditingCategoryChange} min="0" className="w-full px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
+                          <input type="number" name="lifespan_years" value={editingCategory.lifespan_years || ''} onChange={handleEditingCategoryChange} min="0" className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="number" name="avg_replacement_cost" value={editingCategory.avg_replacement_cost || ''} onChange={handleEditingCategoryChange} min="0" step="0.01" className="w-full px-2 py-1 text-black border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
+                          <input type="number" name="avg_replacement_cost" value={editingCategory.avg_replacement_cost || ''} onChange={handleEditingCategoryChange} min="0" step="0.01" className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button onClick={() => handleSaveCategory(category.id)} className="text-green-600 hover:text-green-700">Save</button>
-                          <button onClick={() => setEditingCategoryId(null)} className="text-gray-700 hover:text-black">Cancel</button>
+                          <button onClick={() => handleSaveCategory(category.id)} className="text-green-600 hover:text-green-800">Save</button>
+                          <button onClick={() => setEditingCategoryId(null)} className="text-gray-600 hover:text-gray-800">Cancel</button>
                         </td>
                       </>
                     ) : (
                       <>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-black">{category.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{category.lifespan !== null ? category.lifespan : 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{category.avg_replacement_cost !== null ? `$${category.avg_replacement_cost.toLocaleString()}` : 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-black">{category.lifespan ?? 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-black">{category.avg_replacement_cost?.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) ?? 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button onClick={() => handleEditCategory(category)} className="text-[var(--primary-blue)] hover:text-[var(--primary-blue-hover)]">Edit</button>
-                          <button onClick={() => handleDeleteAssetCategory(category.id)} className="text-red-600 hover:text-red-700">Delete</button>
+                          <button onClick={() => handleEditCategory(category)} className="text-yellow-600 hover:text-yellow-800">Edit</button>
+                          <button onClick={() => handleDeleteAssetCategory(category.id)} className="text-red-600 hover:text-red-800">Delete</button>
                         </td>
                       </>
                     )}
                   </tr>
                 ))}
+                {assetCategories.length === 0 && !loadingCategories && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No asset categories found. Add one above.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
-            {assetCategories.length === 0 && !loadingCategories && <p className="text-center py-4 text-gray-700">No asset categories found. Add one above.</p>}
           </div>
         )}
       </section>
