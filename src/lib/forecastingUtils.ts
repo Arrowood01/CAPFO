@@ -200,3 +200,19 @@ const forecastInput: ForecastingInput = {
 // const byCommunity = groupForecastByCommunity(results);
 // console.log('\\nGrouped by Community:', byCommunity);
 */
+
+/**
+ * Calculates the per-unit cost.
+ *
+ * @param totalCost - The total cost.
+ * @param unitCount - The number of units.
+ * @returns The per-unit cost rounded to 2 decimal places, or 0 if unitCount is not greater than 0.
+ */
+export const calculatePerUnitCost = (totalCost: number, unitCount: number): number => {
+  if (unitCount > 0) {
+    const perUnitCost = totalCost / unitCount;
+    // Round to 2 decimal places
+    return parseFloat(perUnitCost.toFixed(2));
+  }
+  return 0;
+};
