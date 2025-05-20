@@ -25,7 +25,7 @@ export interface ForecastedReplacement {
 export interface ForecastingInput {
   assets: Asset[];
   globalInflationRate: number; // e.g., 0.02 for 2%
-  forecastRangeInYears: 5 | 10 | 15;
+  forecastRangeInYears: number;
 }
 
 /**
