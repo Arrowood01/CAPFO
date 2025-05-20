@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient'; // Assuming supabase client is 
 import { Bar, Pie } from 'react-chartjs-2'; // Or Recharts
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import Papa from 'papaparse'; // For CSV export
-import { calculateFutureAssetCosts, type Asset as ForecastingAsset, type ForecastedReplacement } from '@/lib/forecastingUtils';
+import { calculateFutureAssetCosts, calculatePerUnitCost, type Asset as ForecastingAsset, type ForecastedReplacement } from '@/lib/forecastingUtils';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -28,6 +28,7 @@ interface ForecastedAsset extends DashboardAsset { // Extended with forecast-spe
 interface Community {
   id: string;
   name: string;
+  unit_count?: number | null;
 }
 
 interface Category {
@@ -57,7 +58,7 @@ const DashboardPage: React.FC = () => {
       try {
         const { data: communitiesData, error: communitiesError } = await supabase
           .from('communities')
-          .select('id, name');
+          .select('id, name, unit_count'); // Fetch unit_count
         if (communitiesError) throw communitiesError;
         setAllCommunities(communitiesData || []);
 
@@ -356,6 +357,47 @@ const DashboardPage: React.FC = () => {
             .reduce((sum, asset) => sum + asset.projected_cost, 0)
   );
 
+  // Data for Cost Per Unit by Community Chart
+  const [costPerUnitChartData, setCostPerUnitChartData] = useState<any>({ labels: [], datasets: [] });
+
+  useEffect(() => {
+    if (forecastedAssets.length > 0 && allCommunities.length > 0) {
+      const perUnitCosts: { communityName: string; costPerUnit: number }[] = allCommunities
+        .map(community => {
+          if ((community.unit_count ?? 0) > 0) {
+            const communityAssets = forecastedAssets.filter(
+              asset => asset.communities?.id === community.id || asset.communities?.name === community.name // Match by ID or name
+            );
+            const totalCommunityForecastCost = communityAssets.reduce(
+              (sum, asset) => sum + asset.projected_cost,
+              0
+            );
+            const costPerUnit = calculatePerUnitCost(totalCommunityForecastCost, community.unit_count!); // unit_count is checked > 0
+            return { communityName: community.name, costPerUnit };
+          }
+          return null; // Skip communities with no units or unit_count = 0
+        })
+        .filter(item => item !== null) as { communityName: string; costPerUnit: number }[];
+
+      perUnitCosts.sort((a, b) => b.costPerUnit - a.costPerUnit); // Sort descending by cost per unit
+
+      setCostPerUnitChartData({
+        labels: perUnitCosts.map(item => item.communityName),
+        datasets: [
+          {
+            label: 'Cost Per Unit ($)',
+            data: perUnitCosts.map(item => item.costPerUnit),
+            backgroundColor: 'rgba(153, 102, 255, 0.6)', // Purple
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 1,
+          },
+        ],
+      });
+    } else {
+      setCostPerUnitChartData({ labels: [], datasets: [] }); // Clear chart if no data
+    }
+  }, [forecastedAssets, allCommunities]);
+
 
   return (
     <div className="p-4">
@@ -445,13 +487,17 @@ const DashboardPage: React.FC = () => {
           <div className="p-4 border rounded shadow-sm">
             <h2 className="text-xl font-semibold mb-2">Forecasted Costs by Year</h2>
             <Bar data={barChartData} options={{ responsive: true, plugins: { legend: { position: 'top' as const }, title: { display: true, text: 'Yearly Costs' } } }} />
-            {/* <p className="text-center text-gray-500">(Bar Chart Placeholder - Install and configure Chart.js or Recharts)</p> */}
           </div>
           <div className="p-4 border rounded shadow-sm">
             <h2 className="text-xl font-semibold mb-2">Cost by Category</h2>
             <Pie data={pieChartData} options={{ responsive: true, plugins: { legend: { position: 'top' as const }, title: { display: true, text: 'Category Costs' } } }} />
-            {/* <p className="text-center text-gray-500">(Pie Chart Placeholder - Install and configure Chart.js or Recharts)</p> */}
           </div>
+          {costPerUnitChartData.labels && costPerUnitChartData.labels.length > 0 && (
+            <div className="p-4 border rounded shadow-sm lg:col-span-2"> {/* New chart spans full width on larger screens if only 3 charts */}
+              <h2 className="text-xl font-semibold mb-2">Cost Per Unit by Community</h2>
+              <Bar data={costPerUnitChartData} options={{ responsive: true, indexAxis: 'y' as const, plugins: { legend: { display: false }, title: { display: true, text: 'Cost Per Unit ($)' } }, scales: { x: { beginAtZero: true } } }} />
+            </div>
+          )}
         </div>
       )}
       {!loading && !error && forecastedAssets.length === 0 && !selectedCategory && !selectedCommunities.length && (
