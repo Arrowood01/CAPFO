@@ -357,8 +357,20 @@ const DashboardPage: React.FC = () => {
             .reduce((sum, asset) => sum + asset.projected_cost, 0)
   );
 
+  // Define a type for Chart.js data structure
+  interface ChartJsData {
+    labels: string[];
+    datasets: Array<{
+      label?: string;
+      data: number[];
+      backgroundColor?: string | string[];
+      borderColor?: string | string[];
+      borderWidth?: number;
+    }>;
+  }
+
   // Data for Cost Per Unit by Community Chart
-  const [costPerUnitChartData, setCostPerUnitChartData] = useState<any>({ labels: [], datasets: [] });
+  const [costPerUnitChartData, setCostPerUnitChartData] = useState<ChartJsData>({ labels: [], datasets: [] });
 
   useEffect(() => {
     if (forecastedAssets.length > 0 && allCommunities.length > 0) {
