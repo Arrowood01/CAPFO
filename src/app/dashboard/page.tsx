@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Doughnut, Pie, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, type ChartOptions } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'; // Removed unused ChartOptions
 import Papa from 'papaparse';
 import { calculateFutureAssetCosts, calculatePerUnitCost, type Asset as ForecastingAsset, type ForecastedReplacement } from '@/lib/forecastingUtils';
 
@@ -144,7 +144,7 @@ const DashboardPage: React.FC = () => {
       }
       
       const validAssetsData = Array.isArray(supabaseAssetsData)
-        ? supabaseAssetsData.filter((item: any) => item && !item.error && item.id)
+        ? supabaseAssetsData.filter((item: { id?: string; error?: unknown; [key: string]: any }) => item && !item.error && item.id)
         : [];
 
       if (validAssetsData.length === 0 && supabaseAssetsData && supabaseAssetsData.length > 0) {
