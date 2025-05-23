@@ -32,7 +32,8 @@
 */
 
 body {
-  @apply font-sans bg-white text-gray-900; /* Apply base Tailwind classes directly */
+  /* @apply font-sans bg-white text-gray-900; */ /* Temporarily disable Tailwind apply for this test */
+  border: 10px solid lime !important; /* Very obvious border test */
   /* font-family: 'InterVariable', sans-serif; */ /* Let Tailwind handle this via font-sans */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
