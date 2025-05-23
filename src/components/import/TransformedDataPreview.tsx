@@ -102,9 +102,9 @@ const TransformedDataPreview = ({
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {transformedData.map((row, rowIndex) => (
-              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {transformedData.map((row, idx) => (
+              <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                 {sortedHeaders.map((header) => (
                   <td key={header} className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                     {String(row[header] !== null && row[header] !== undefined ? row[header] : '')}

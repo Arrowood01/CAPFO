@@ -149,9 +149,9 @@ const ColumnMapper = ({
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {dataPreview.map((row, rowIndex) => (
-              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {dataPreview.map((row, idx) => (
+              <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                 {row.map((cell, cellIndex) => (
                   <td key={cellIndex} className="px-3 py-2 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">
                     {String(cell !== null && cell !== undefined ? cell : '')}

@@ -883,9 +883,9 @@ const SettingsPage = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {assetCategories.map((category) => (
-                  <tr key={category.id}>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {assetCategories.map((category, idx) => (
+                  <tr key={category.id} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                     {editingCategoryId === category.id ? (
                       <>
                         <td className="px-6 py-4 whitespace-nowrap">

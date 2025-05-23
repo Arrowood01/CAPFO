@@ -57,3 +57,18 @@ select {
   appearance: none;
   padding-right: 2.5rem; /* Ensure space for arrow */
 }
+
+/* Styles for sticky table headers */
+th {
+  position: sticky;
+  top: 0;
+  /* Ensuring the background matches typical header styles, adjust if your theme is different */
+  background-color: #f9fafb; /* This is Tailwind's gray-50, often used for thead */
+  z-index: 10;
+}
+
+/* Optional: Add a border to the bottom of sticky headers to separate from scrolling content */
+/* th {
+  border-bottom-width: 2px;
+  border-bottom-color: #e5e7eb; /* Tailwind's gray-200 */
+/* } */

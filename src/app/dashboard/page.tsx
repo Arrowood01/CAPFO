@@ -843,7 +843,7 @@ const DashboardPage: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projected Cost</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 bg-white">
                 {forecastedAssets
                   .filter(asset => {
                     if (!showAtRiskOnly) return true;
@@ -857,7 +857,7 @@ const DashboardPage: React.FC = () => {
                     }
                     return false; // Default to not showing if data is insufficient for calculation
                   })
-                  .map(asset => {
+                  .map((asset, idx) => {
                     let lifeUsed = -1; // Default to a value indicating data not available or not applicable
                     if (asset.lifespan && asset.install_date) {
                       const installYear = new Date(asset.install_date).getFullYear();
@@ -867,10 +867,11 @@ const DashboardPage: React.FC = () => {
                       }
                     }
 
-                    const rowClass = lifeUsed >= 1 ? "bg-red-100" : lifeUsed >= 0.75 ? "bg-yellow-100" : "";
+                    const riskClass = lifeUsed >= 1 ? "bg-red-100" : lifeUsed >= 0.75 ? "bg-yellow-100" : "";
+                    const stripeClass = idx % 2 === 0 ? 'bg-gray-50' : 'bg-white';
 
                     return (
-                      <tr key={asset.id} className={rowClass}>
+                      <tr key={asset.id} className={`${riskClass} ${stripeClass}`.trim()}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.unit_number || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.communities?.name || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.categories?.name || 'N/A'}</td>
