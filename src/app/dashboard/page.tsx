@@ -322,7 +322,19 @@ const DashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [forecastRange, selectedCommunities, selectedCategory, globalInflationRate, allCommunitySettings, defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit]);
+  }, [
+    forecastRange,
+    selectedCommunities,
+    selectedCategory,
+    globalInflationRate,
+    allCommunitySettings,
+    defaultGlobalInvestmentRate,
+    defaultGlobalAnnualDeposit,
+    activeForecastYears, // Added missing dependency
+    allCommunities, // Added missing dependency
+    // supabase, // supabase client is stable, typically not needed in deps
+    // setLoading, setError, setForecastedAssets, setActiveInflationRate, etc. are stable setters from useState
+  ]);
 
   useEffect(() => {
     runForecast();
