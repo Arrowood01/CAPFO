@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`antialiased`}> {/* Removed Geist font variables from className for now */}
         <div className="flex h-screen bg-gray-100"> {/* Ensure bg-gray-100 is on the main flex container */}
           {/* Fixed Sidebar */}
           <aside className="fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 space-y-6 shadow-lg z-10">
