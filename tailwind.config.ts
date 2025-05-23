@@ -2,10 +2,8 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}', // Added to cover root app directory
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}', // Kept for src/app structure
+    "./src/**/*.{js,ts,jsx,tsx,mdx}", // Broadly scan the entire src directory
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",   // Scan a root app directory if it exists
   ],
   theme: {
     extend: {
