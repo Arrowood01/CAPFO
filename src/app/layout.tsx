@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 // import { Geist, Geist_Mono } from "next/font/google"; // Geist imports removed as variables are not directly used in className
-import "@/app/globals.css"; // Using tsconfig path alias
+import "./globals.css"; // Reverting to direct relative path for final test
 // import Navigation from "@/components/Navigation"; // Navigation component removed
 import AuthGuard from "@/components/AuthGuard"; // Restore AuthGuard
 
