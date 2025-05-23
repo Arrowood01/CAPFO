@@ -32,17 +32,30 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white text-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navigation /> {/* Add the Navigation component here */}
-        <main className="flex-grow container mx-auto px-4 py-8"> {/* Add a main tag for content */}
-          <AuthGuard>
-            {children}
-          </AuthGuard>
-        </main>
-        <footer className="bg-gray-50 text-center p-4 text-sm text-gray-700 border-t border-gray-200"> {/* Lighter footer, black text */}
-          © {new Date().getFullYear()} Capital Forecaster. All rights reserved.
-        </footer>
+        <div className="flex h-screen">
+          <aside className="w-64 bg-gray-900 text-white p-6 space-y-4 flex-shrink-0">
+            <h2 className="text-xl font-semibold">Capital Forecaster</h2>
+            <nav className="space-y-2">
+              <a href="/dashboard" className="block hover:text-blue-400">Dashboard</a>
+              <a href="/portfolio" className="block hover:text-blue-400">Portfolio</a>
+              <a href="/reports" className="block hover:text-blue-400">Reports</a>
+              <a href="/settings" className="block hover:text-blue-400">Settings</a>
+            </nav>
+          </aside>
+          <div className="flex-1 flex flex-col overflow-hidden"> {/* Main content area wrapper */}
+            <Navigation /> {/* Existing top navigation */}
+            <main className="flex-1 overflow-y-auto bg-white container mx-auto px-4 py-8">
+              <AuthGuard>
+                {children}
+              </AuthGuard>
+            </main>
+            <footer className="bg-gray-50 text-center p-4 text-sm text-gray-700 border-t border-gray-200 flex-shrink-0">
+              © {new Date().getFullYear()} Capital Forecaster. All rights reserved.
+            </footer>
+          </div>
+        </div>
       </body>
     </html>
   );
