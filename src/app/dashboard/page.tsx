@@ -94,6 +94,7 @@ const DashboardPage: React.FC = () => {
   const [overdueAssetsCount, setOverdueAssetsCount] = useState<number>(0);
   const [isYebBelowTarget, setIsYebBelowTarget] = useState<boolean>(false);
   const [isUnderfunded, setIsUnderfunded] = useState<boolean>(false);
+  const [suggestedMonthlyDepositPerUnit, setSuggestedMonthlyDepositPerUnit] = useState<number>(0);
 
 
   // State for displaying active forecast settings
@@ -291,11 +292,30 @@ const DashboardPage: React.FC = () => {
       // Assuming "underfunded" means total deposits don't cover total expenses in the period
       setIsUnderfunded(forecastResult.totalDepositsInForecastPeriod < forecastResult.totalExpensesInForecastPeriod);
 
+      // Calculate Suggested Monthly Deposit
+      let totalUnitsInSelection = 0;
+      if (selectedCommunities.length > 0) {
+        totalUnitsInSelection = selectedCommunities.reduce((acc, communityId) => {
+          const community = allCommunities.find(c => c.id === communityId);
+          return acc + (community?.unit_count || 0);
+        }, 0);
+      } else { // If no specific communities selected, consider all communities
+        totalUnitsInSelection = allCommunities.reduce((acc, community) => acc + (community.unit_count || 0), 0);
+      }
+
+      if (forecastResult.totalExpensesInForecastPeriod > 0 && activeForecastYears > 0 && totalUnitsInSelection > 0) {
+        const suggestedDeposit = (forecastResult.totalExpensesInForecastPeriod / activeForecastYears / totalUnitsInSelection / 12);
+        setSuggestedMonthlyDepositPerUnit(suggestedDeposit);
+      } else {
+        setSuggestedMonthlyDepositPerUnit(0);
+      }
+
     } catch (err) {
       console.error("Error running forecast:", err);
       setError('Failed to run forecast.');
       setForecastedAssets([]);
       setForecastAnalysisDetails(null); // Clear analysis on error
+      setSuggestedMonthlyDepositPerUnit(0); // Clear on error
     } finally {
       setLoading(false);
     }
@@ -602,6 +622,19 @@ const DashboardPage: React.FC = () => {
           ) : (
             <p className="text-sm text-green-600">Forecast health looks good based on current parameters!</p>
           )}
+        </div>
+      )}
+
+      {/* Suggested Monthly Deposit Section */}
+      {forecastAnalysisDetails && !loading && suggestedMonthlyDepositPerUnit > 0 && (
+        <div className="p-4 bg-white rounded-md shadow-md mt-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">Suggested Monthly Deposit</h2>
+          <p className="text-sm text-gray-600">
+            Based on your current forecast, we suggest a per-unit monthly deposit of:
+          </p>
+          <p className="text-2xl font-bold text-green-700 mt-2">
+            ${suggestedMonthlyDepositPerUnit.toFixed(2)} / unit
+          </p>
         </div>
       )}
 
