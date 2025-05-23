@@ -746,8 +746,8 @@ const DashboardPage: React.FC = () => {
 
       {!loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"> {/* Consistent gap */}
-          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">Forecasted Costs by Year</h2>
+          <div className="bg-white p-6 shadow-xl rounded-xl border border-gray-300">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">Forecasted Costs by Year</h2>
             <Doughnut
               data={barChartData}
               options={{
@@ -762,8 +762,8 @@ const DashboardPage: React.FC = () => {
               plugins={doughnutChartPlugins}
             />
           </div>
-          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">Cost by Category</h2>
+          <div className="bg-white p-6 shadow-xl rounded-xl border border-gray-300">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">Cost by Category</h2>
             <Pie
               data={pieChartData}
               options={{
@@ -778,8 +778,8 @@ const DashboardPage: React.FC = () => {
             />
           </div>
           {costPerUnitChartData.labels && costPerUnitChartData.labels.length > 0 && (
-            <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200 lg:col-span-2">
-              <h2 className="text-xl font-semibold mb-4">Cost Per Unit by Community</h2>
+            <div className="bg-white p-6 shadow-xl rounded-xl border border-gray-300 lg:col-span-2">
+              <h2 className="text-lg font-semibold mb-4 text-gray-800">Cost Per Unit by Community</h2>
               <Bar
                 data={costPerUnitChartData}
                 options={{
