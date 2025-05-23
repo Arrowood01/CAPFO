@@ -9,9 +9,7 @@ import {
   generateForecast,
   calculatePerUnitCost,
   type Asset as ForecastingAsset,
-  type ForecastedReplacement,
   type ForecastResult, // Added
-  type AssetWithAge, // Added
   // type CommunitySpecificSettings // This was removed from forecastingUtils as params are direct
 } from '@/lib/forecastingUtils';
 
