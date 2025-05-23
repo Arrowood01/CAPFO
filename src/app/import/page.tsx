@@ -371,7 +371,7 @@ const ImportPage = () => {
                   id="community-select"
                   value={selectedCommunityId || ''}
                   onChange={(e) => setSelectedCommunityId(e.target.value)}
-                  className="p-2 rounded border border-gray-300"
+                  className="rounded-md border-gray-300 shadow-sm focus:ring-primary focus:border-primary text-sm"
                 >
                   <option value="" disabled>Select a community</option>
                   {communities.map((community) => (

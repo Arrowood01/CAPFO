@@ -137,7 +137,7 @@ const ColumnMapper = ({
                   <select
                     value={mappings[colIndex] || ''}
                     onChange={(e) => handleMappingChange(colIndex, e.target.value)}
-                    className="p-2 rounded border border-gray-300 block w-full"
+                    className="rounded-md border-gray-300 shadow-sm focus:ring-primary focus:border-primary text-sm block w-full"
                   >
                     {MAPPING_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>

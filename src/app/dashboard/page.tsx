@@ -690,7 +690,7 @@ const DashboardPage: React.FC = () => {
             multiple
             value={selectedCommunities}
             onChange={(e) => setSelectedCommunities(Array.from(e.target.selectedOptions, option => option.value))}
-            className="p-2 rounded border border-gray-300 h-24"
+            className="rounded-md border-gray-300 shadow-sm focus:ring-primary focus:border-primary text-sm h-24"
           >
             {allCommunities.map(comm => <option key={comm.id} value={comm.id}>{comm.name}</option>)}
           </select>
@@ -703,7 +703,7 @@ const DashboardPage: React.FC = () => {
             id="category"
             value={selectedCategory || ''}
             onChange={(e) => setSelectedCategory(e.target.value || null)}
-            className="p-2 rounded border border-gray-300"
+            className="rounded-md border-gray-300 shadow-sm focus:ring-primary focus:border-primary text-sm"
           >
             <option value="">All Categories</option>
             {allCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
@@ -716,7 +716,7 @@ const DashboardPage: React.FC = () => {
             id="status"
             value={selectedStatus || ''}
             onChange={(e) => setSelectedStatus(e.target.value || null)}
-            className="p-2 rounded border border-gray-300"
+            className="rounded-md border-gray-300 shadow-sm focus:ring-primary focus:border-primary text-sm"
           >
             <option value="">Any Status</option>
             <option value="active">Active</option>
