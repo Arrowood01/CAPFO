@@ -45,6 +45,8 @@ interface DashboardAsset {
 interface ForecastedAsset extends DashboardAsset { // Extended with forecast-specific fields
   replacement_year: number;
   projected_cost: number;
+  isOverdue?: boolean;
+  lifespan?: number | null;
 }
 
 interface Community {
@@ -102,6 +104,7 @@ const DashboardPage: React.FC = () => {
   const [activeInvestmentRate, setActiveInvestmentRate] = useState<number>(defaultGlobalInvestmentRate);
   const [activeForecastYears, setActiveForecastYears] = useState<number>(forecastRange);
   const [activeAnnualDeposit, setActiveAnnualDeposit] = useState<number>(defaultGlobalAnnualDeposit);
+  const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
 
 
   useEffect(() => {
@@ -268,20 +271,20 @@ const DashboardPage: React.FC = () => {
 
       // Populate forecastedAssets for charts and tables (existing logic)
       const finalForecastedAssets: ForecastedAsset[] = forecastResult.forecastedReplacements.map(fr => {
-        // The fr.asset is already AssetWithAge, but we might only need DashboardAsset props here
-        // or ensure ForecastedAsset can accommodate AssetWithAge if needed.
-        // For now, we map to the existing ForecastedAsset structure.
         const originalAssetDetails = assetsData.find((a: DashboardAsset) => a.id === fr.asset.id);
+        const detailedAsset = forecastResult.detailedAssets.find(da => da.id === fr.asset.id);
         return {
           id: fr.asset.id,
           unit_number: originalAssetDetails?.unit_number,
           install_date: fr.asset.install_date,
           description: fr.asset.name,
           purchase_price: fr.asset.purchase_price,
-          categories: originalAssetDetails?.categories, // Keep original category structure for display
-          communities: originalAssetDetails?.communities, // Keep original community structure for display
+          categories: originalAssetDetails?.categories,
+          communities: originalAssetDetails?.communities,
           replacement_year: fr.year,
           projected_cost: fr.cost,
+          isOverdue: detailedAsset?.isOverdue,
+          lifespan: originalAssetDetails?.categories?.lifespan,
         };
       });
       setForecastedAssets(finalForecastedAssets);
@@ -796,12 +799,23 @@ const DashboardPage: React.FC = () => {
         <div className="p-4 border rounded shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Forecasted Assets</h2>
-            <button
-              onClick={handleExportToCSV}
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-            >
-              Export to CSV
-            </button>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={showAtRiskOnly}
+                  onChange={() => setShowAtRiskOnly(!showAtRiskOnly)}
+                  className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
+                />
+                Show At-Risk Only
+              </label>
+              <button
+                onClick={handleExportToCSV}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+              >
+                Export to CSV
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -810,20 +824,55 @@ const DashboardPage: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit #</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Community</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lifespan (Yrs)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Replacement Year</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projected Cost</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {forecastedAssets.map(asset => (
-                  <tr key={asset.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.unit_number || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.communities?.name || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.categories?.name || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.replacement_year}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${asset.projected_cost.toFixed(2)}</td>
-                  </tr>
-                ))}
+                {forecastedAssets
+                  .filter(asset => {
+                    if (!showAtRiskOnly) return true;
+                    if (asset.lifespan && asset.install_date) {
+                      const installYear = new Date(asset.install_date).getFullYear();
+                      const currentYear = new Date().getFullYear();
+                      if (asset.lifespan > 0) { // Avoid division by zero
+                        const lifeUsed = (currentYear - installYear) / asset.lifespan;
+                        return lifeUsed >= 0.75;
+                      }
+                    }
+                    return false; // Default to not showing if data is insufficient for calculation
+                  })
+                  .map(asset => {
+                    let lifeUsed = -1; // Default to a value indicating data not available or not applicable
+                    if (asset.lifespan && asset.install_date) {
+                      const installYear = new Date(asset.install_date).getFullYear();
+                      const currentYear = new Date().getFullYear();
+                      if (asset.lifespan > 0) {
+                         lifeUsed = (currentYear - installYear) / asset.lifespan;
+                      }
+                    }
+
+                    const rowClass = lifeUsed >= 1 ? "bg-red-100" : lifeUsed >= 0.75 ? "bg-yellow-100" : "";
+
+                    return (
+                      <tr key={asset.id} className={rowClass}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.unit_number || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.communities?.name || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.categories?.name || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.lifespan ?? 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {lifeUsed >= 1 && <span className="text-xs text-red-700 bg-red-200 px-2 py-1 rounded-full">Overdue</span>}
+                          {lifeUsed >= 0.75 && lifeUsed < 1 && <span className="text-xs text-yellow-700 bg-yellow-200 px-2 py-1 rounded-full">Warning</span>}
+                          {lifeUsed < 0.75 && lifeUsed >= 0 && <span className="text-xs text-green-700 bg-green-200 px-2 py-1 rounded-full">OK</span>}
+                          {lifeUsed < 0 && <span className="text-xs text-gray-500">N/A</span>}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.replacement_year}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${asset.projected_cost.toFixed(2)}</td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
