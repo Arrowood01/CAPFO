@@ -22,25 +22,48 @@ export interface ForecastedReplacement {
   asset: Asset; // Include the original asset for reference
 }
 
-export interface ForecastingInput {
+// CommunitySpecificSettings can be removed if parameters are passed directly
+// export interface CommunitySpecificSettings {
+//   inflation_rate?: number; // decimal
+//   investment_rate?: number; // decimal
+//   forecast_years?: number;
+//   annual_deposit?: number;
+// }
+
+export interface GenerateForecastParams {
   assets: Asset[];
-  globalInflationRate: number; // e.g., 0.02 for 2%
-  forecastRangeInYears: number;
+  inflationRate: number; // Effective inflation rate, pre-calculated by the caller
+  investmentRate: number; // Effective investment rate, pre-calculated by the caller
+  forecastYears: number; // Effective forecast years, pre-calculated by the caller
+  annualDeposit: number; // Effective annual deposit, pre-calculated by the caller
 }
 
 /**
  * Calculates future asset replacement costs based on inflation and category lifespan.
+ * The necessary parameters like inflationRate and forecastYears are expected to be
+ * pre-calculated and passed directly.
  *
- * @param input - The input parameters for the forecasting calculation.
+ * @param params - The input parameters for the forecasting calculation, including assets and effective rates/years.
  * @returns An array of forecasted replacements.
  */
-export const calculateFutureAssetCosts = (
-  input: ForecastingInput
+export const generateForecast = (
+  params: GenerateForecastParams
 ): ForecastedReplacement[] => {
-  const { assets, globalInflationRate, forecastRangeInYears } = input;
+  const {
+    assets,
+    inflationRate, // Use this directly
+    // investmentRate, // Available if logic needs to be added
+    forecastYears, // Use this directly
+    // annualDeposit, // Available if logic needs to be added
+  } = params;
+
+  // The investmentRate and annualDeposit parameters are now available directly
+  // if the forecasting logic needs to incorporate them in the future.
+  // The core logic below primarily uses assets, inflationRate, and forecastYears.
+
   const forecastedReplacements: ForecastedReplacement[] = [];
   const currentYear = new Date().getFullYear();
-  const endForecastYear = currentYear + forecastRangeInYears;
+  const endForecastYear = currentYear + forecastYears; // Use forecastYears directly from params
 
   assets.forEach((asset) => {
     if (!asset || typeof asset.install_date !== 'string' || typeof asset.category?.lifespan !== 'number' || asset.category.lifespan <= 0) {
@@ -80,7 +103,7 @@ export const calculateFutureAssetCosts = (
 
       if (yearsToInflate > 0) {
         for (let i = 0; i < yearsToInflate; i++) {
-          futureCost *= (1 + globalInflationRate);
+          futureCost *= (1 + inflationRate); // Use effective inflation rate
         }
       }
       // If yearsToInflate is 0 (replacement is current year), futureCost remains asset.category.avg_replacement_cost.

@@ -5,7 +5,21 @@ import { supabase } from '@/lib/supabaseClient';
 import { Doughnut, Pie, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'; // Removed unused ChartOptions
 import Papa from 'papaparse';
-import { calculateFutureAssetCosts, calculatePerUnitCost, type Asset as ForecastingAsset, type ForecastedReplacement } from '@/lib/forecastingUtils';
+import {
+  generateForecast,
+  calculatePerUnitCost,
+  type Asset as ForecastingAsset,
+  type ForecastedReplacement,
+  // type CommunitySpecificSettings // This was removed from forecastingUtils as params are direct
+} from '@/lib/forecastingUtils';
+
+// Re-define CommunitySpecificSettings here if needed for state, or use a more generic Record type
+interface CommunitySpecificSettingsInDashboard {
+  inflation_rate?: number;
+  investment_rate?: number;
+  forecast_years?: number;
+  annual_deposit?: number;
+}
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -63,11 +77,22 @@ const DashboardPage: React.FC = () => {
 
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
-  const [inflationRate, setInflationRate] = useState<number>(0.02);
+  const [globalInflationRate, setGlobalInflationRate] = useState<number>(0.02); // Renamed for clarity
+  const [allCommunitySettings, setAllCommunitySettings] = useState<Record<string, CommunitySpecificSettingsInDashboard>>({});
+  // Add default values for other new global settings if they are intended to be configurable globally
+  const [defaultGlobalInvestmentRate, setDefaultGlobalInvestmentRate] = useState<number>(0.005); // Example default
+  const [defaultGlobalAnnualDeposit, setDefaultGlobalAnnualDeposit] = useState<number>(0); // Example default
 
   const [forecastedAssets, setForecastedAssets] = useState<ForecastedAsset[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // State for displaying active forecast settings
+  const [activeInflationRate, setActiveInflationRate] = useState<number>(globalInflationRate);
+  const [activeInvestmentRate, setActiveInvestmentRate] = useState<number>(defaultGlobalInvestmentRate);
+  const [activeForecastYears, setActiveForecastYears] = useState<number>(forecastRange);
+  const [activeAnnualDeposit, setActiveAnnualDeposit] = useState<number>(defaultGlobalAnnualDeposit);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,11 +115,36 @@ const DashboardPage: React.FC = () => {
           .select('value')
           .eq('key', 'inflation_rate')
           .single();
-        if (settingsError) {
-          console.warn('Inflation rate not found in settings, using default.');
+        if (settingsError && settingsError.code !== 'PGRST116') { // PGRST116: no row found, ok
+          console.error('Error fetching global inflation rate:', settingsError);
+          // Keep default globalInflationRate
         } else if (settingsData) {
-          setInflationRate(parseFloat(settingsData.value) || 0.02);
+          setGlobalInflationRate(parseFloat(settingsData.value) || 0.02);
+        } else {
+          console.warn('Global inflation rate not found in settings, using default.');
+          // Keep default globalInflationRate
         }
+
+       // Fetch all community settings
+       const { data: communitySettingsData, error: communitySettingsError } = await supabase
+         .from('community_settings')
+         .select('*');
+       if (communitySettingsError) {
+         console.error('Error fetching community settings:', communitySettingsError);
+       } else if (communitySettingsData) {
+         const settingsMap: Record<string, CommunitySpecificSettingsInDashboard> = {};
+         communitySettingsData.forEach(s => {
+           settingsMap[s.community_id] = {
+             inflation_rate: s.inflation_rate,
+             investment_rate: s.investment_rate,
+             forecast_years: s.forecast_years,
+             annual_deposit: s.annual_deposit,
+           };
+         });
+         setAllCommunitySettings(settingsMap);
+       }
+       // Potentially fetch global investment_rate and annual_deposit if they are stored in 'settings' table
+       // For now, using local defaults: defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit
       } catch (err) {
         console.error("Error fetching initial data:", err);
         setError('Failed to load initial filter data.');
@@ -170,13 +220,34 @@ const DashboardPage: React.FC = () => {
         community: asset.communities?.name || 'Unknown Community',
       }));
 
-      const forecastInput = {
-        assets: assetsForForecast,
-        globalInflationRate: inflationRate,
-        forecastRangeInYears: forecastRange,
-      };
+      // Determine community settings for the *first* selected community if multiple are selected.
+      // Or, decide on a strategy for multiple selections (e.g., average, or run forecast per community).
+      // For now, let's assume if multiple communities are selected, we use global/defaults,
+      // or if only one is selected, we use its specific settings.
+      let effectiveCommunitySettings: CommunitySpecificSettingsInDashboard | undefined = undefined;
+      if (selectedCommunities.length === 1) {
+        effectiveCommunitySettings = allCommunitySettings[selectedCommunities[0]];
+      }
+      
+      // Prepare variables for the new generateForecast call structure
+      const inflation = effectiveCommunitySettings?.inflation_rate ?? globalInflationRate;
+      const investmentRate = effectiveCommunitySettings?.investment_rate ?? defaultGlobalInvestmentRate;
+      const forecastYears = effectiveCommunitySettings?.forecast_years ?? forecastRange;
+      const annualDeposit = effectiveCommunitySettings?.annual_deposit ?? defaultGlobalAnnualDeposit;
 
-      const rawForecastResults: ForecastedReplacement[] = calculateFutureAssetCosts(forecastInput);
+      // Update active settings for display
+      setActiveInflationRate(inflation);
+      setActiveInvestmentRate(investmentRate);
+      setActiveForecastYears(forecastYears);
+      setActiveAnnualDeposit(annualDeposit);
+
+      const rawForecastResults: ForecastedReplacement[] = generateForecast({
+        assets: assetsForForecast, // Now passing the assets
+        inflationRate: inflation,
+        investmentRate,
+        forecastYears,
+        annualDeposit,
+      });
 
       const finalForecastedAssets: ForecastedAsset[] = rawForecastResults.map(fr => {
         const originalDashboardAsset = assetsData.find((a: DashboardAsset) => a.id === fr.asset.id);
@@ -206,7 +277,7 @@ const DashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [forecastRange, selectedCommunities, selectedCategory, inflationRate]);
+  }, [forecastRange, selectedCommunities, selectedCategory, globalInflationRate, allCommunitySettings]);
 
   useEffect(() => {
     runForecast();
@@ -224,10 +295,30 @@ const DashboardPage: React.FC = () => {
       if (settingsError && settingsError.code !== 'PGRST116') {
         console.warn('Error re-fetching inflation rate, using current value.');
       } else if (settingsData) {
-        setInflationRate(parseFloat(settingsData.value) || 0.02);
+        setGlobalInflationRate(parseFloat(settingsData.value) || 0.02);
       } else {
-         setInflationRate(0.02);
+         setGlobalInflationRate(0.02); // Fallback if not found
       }
+
+     // Re-fetch all community settings on manual refresh
+     const { data: communitySettingsData, error: csError } = await supabase
+       .from('community_settings')
+       .select('*');
+     if (csError) {
+       console.error('Error re-fetching community settings:', csError);
+     } else if (communitySettingsData) {
+       const settingsMap: Record<string, CommunitySpecificSettingsInDashboard> = {};
+       communitySettingsData.forEach(s => {
+         settingsMap[s.community_id] = {
+           inflation_rate: s.inflation_rate,
+           investment_rate: s.investment_rate,
+           forecast_years: s.forecast_years,
+           annual_deposit: s.annual_deposit,
+         };
+       });
+       setAllCommunitySettings(settingsMap);
+     }
+     // Also re-fetch global investment/annual deposit if they become configurable
 
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
@@ -477,6 +568,16 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
+{/* Active Settings Display */}
+        <div className="p-4 bg-slate-800 rounded-xl shadow-lg mb-6 border border-indigo-700">
+          <p className="text-md font-semibold text-indigo-300 mb-2">Active Forecast Settings:</p>
+          <ul className="text-sm text-gray-300 list-disc pl-5 space-y-1">
+            <li>Inflation Rate: <span className="font-medium text-indigo-400">{(activeInflationRate * 100).toFixed(2)}%</span></li>
+            <li>Investment Rate: <span className="font-medium text-indigo-400">{(activeInvestmentRate * 100).toFixed(2)}%</span></li>
+            <li>Forecast Range: <span className="font-medium text-indigo-400">{activeForecastYears} years</span></li>
+            <li>Annual Deposit: <span className="font-medium text-indigo-400">${activeAnnualDeposit.toLocaleString()}</span></li>
+          </ul>
+        </div>
         <div>
           <label htmlFor="community" className="block text-sm font-medium text-gray-700">Community</label>
           <select
