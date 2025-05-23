@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google"; // Removed Inter
 import "./globals.css";
 import Navigation from "@/components/Navigation"; // Import the Navigation component
 import AuthGuard from "@/components/AuthGuard"; // Restore AuthGuard
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-geist-sans", // Retain for fallback or specific uses
   subsets: ["latin"],
 });
 
@@ -14,10 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
+// Inter is now imported and applied globally via globals.css
 
 export const metadata: Metadata = {
   title: "Capital Forecasting Tool", // Updated title
@@ -32,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="flex h-screen bg-gray-100">
           {/* Fixed Sidebar */}

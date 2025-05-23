@@ -1,19 +1,28 @@
+@import "@fontsource/inter/variable.css"; /* Import Inter font variable */
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff; /* White background */
-  --foreground: #000000; /* Black foreground/text */
-  --primary-blue: #007bff;
-  --primary-blue-hover: #0056b3;
-  --secondary-blue: #e7f3ff; /* Lighter blue for accents or backgrounds */
-  --border-blue: #b3d7ff; /* Blue for borders */
+  /* --font-sans variable can be removed if InterVariable is directly applied in body,
+     or kept if you want to use it via Tailwind's font-sans utility class.
+     For direct application as requested: remove or comment out.
+     If keeping for Tailwind utility (e.g. className="font-sans"):
+     --font-sans: "InterVariable", var(--font-geist-sans);
+  */
+  --font-mono: var(--font-geist-mono); /* Keep Geist Mono for mono needs */
+  --background: #ffffff;
+  --foreground: #111827;
+  --primary-blue: #2563eb;
+  --primary-blue-hover: #1d4ed8;
+  --secondary-blue: #dbeafe;
+  --border-blue: #93c5fd;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Ensure Tailwind's font-sans utility uses InterVariable if you keep the :root variable */
+  /* --font-sans: var(--font-sans); */
+  --font-mono: var(--font-mono);
 }
 
 /* Remove dark mode preference to enforce light theme */
@@ -27,9 +36,11 @@
 */
 
 body {
+  font-family: 'InterVariable', sans-serif; /* Directly apply InterVariable */
   background: var(--background);
   color: var(--foreground);
-  /* font-family is now primarily controlled by --font-sans in the :root via Tailwind's theme */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Ensure input fields have black text */
