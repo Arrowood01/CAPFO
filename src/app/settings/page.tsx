@@ -436,7 +436,7 @@ const SettingsPage = () => {
         validationOk = false;
         break;
       }
-      (validatedSettings as any)[field.dbKey] = parsedValue;
+      (validatedSettings as Record<keyof CommunitySettings, unknown>)[field.dbKey] = parsedValue;
     }
 
     if (!validationOk) {

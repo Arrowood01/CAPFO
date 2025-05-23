@@ -80,8 +80,8 @@ const DashboardPage: React.FC = () => {
   const [globalInflationRate, setGlobalInflationRate] = useState<number>(0.02); // Renamed for clarity
   const [allCommunitySettings, setAllCommunitySettings] = useState<Record<string, CommunitySpecificSettingsInDashboard>>({});
   // Add default values for other new global settings if they are intended to be configurable globally
-  const [defaultGlobalInvestmentRate, setDefaultGlobalInvestmentRate] = useState<number>(0.005); // Example default
-  const [defaultGlobalAnnualDeposit, setDefaultGlobalAnnualDeposit] = useState<number>(0); // Example default
+  const [defaultGlobalInvestmentRate, _setDefaultGlobalInvestmentRate] = useState<number>(0.005); // Example default
+  const [defaultGlobalAnnualDeposit, _setDefaultGlobalAnnualDeposit] = useState<number>(0); // Example default
 
   const [forecastedAssets, setForecastedAssets] = useState<ForecastedAsset[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -194,7 +194,7 @@ const DashboardPage: React.FC = () => {
       }
       
       const validAssetsData = Array.isArray(supabaseAssetsData)
-        ? supabaseAssetsData.filter((item: { id?: string; error?: unknown; [key: string]: any }) => item && !item.error && item.id)
+        ? supabaseAssetsData.filter((item: { id?: string; error?: unknown; [key: string]: unknown }) => item && !item.error && item.id)
         : [];
 
       if (validAssetsData.length === 0 && supabaseAssetsData && supabaseAssetsData.length > 0) {
@@ -277,7 +277,7 @@ const DashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [forecastRange, selectedCommunities, selectedCategory, globalInflationRate, allCommunitySettings]);
+  }, [forecastRange, selectedCommunities, selectedCategory, globalInflationRate, allCommunitySettings, defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit]);
 
   useEffect(() => {
     runForecast();
