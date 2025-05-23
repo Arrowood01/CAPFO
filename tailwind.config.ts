@@ -10,14 +10,15 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['InterVariable', 'sans-serif'], // Simplified as per suggestion
-        mono: ['var(--font-geist-mono)', 'monospace'], // Retaining Geist Mono for mono
+        sans: ['InterVariable', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'monospace'],
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic':
-          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-      },
+      // Temporarily commenting out other extensions for troubleshooting
+      // backgroundImage: {
+      //   'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+      //   'gradient-conic':
+      //     'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      // },
     },
   },
   plugins: [],
