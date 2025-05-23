@@ -7,7 +7,7 @@ import AuthGuard from "@/components/AuthGuard"; // Restore AuthGuard
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter', // Define a CSS variable for Inter
+  // variable: '--font-inter', // No longer using CSS variable directly for Tailwind, using className
 });
 
 // const geistSans = Geist({
@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}> {/* Apply Inter variable to body */}
+      <body className={`${inter.className} antialiased`}> {/* Apply Inter className to body */}
         <div className="flex h-screen bg-gray-100"> {/* Ensure bg-gray-100 is on the main flex container */}
           {/* Fixed Sidebar */}
           <aside className="fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 space-y-6 shadow-lg z-10">

@@ -8,7 +8,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)', 'sans-serif'], // Use the CSS variable from next/font
+        sans: ['Inter', 'sans-serif'], // Directly specify Inter, next/font will provide it
         mono: ['var(--font-geist-mono)', 'monospace'],
       },
       backgroundImage: {
