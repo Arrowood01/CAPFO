@@ -13,12 +13,11 @@ const config: Config = {
         sans: ['InterVariable', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'monospace'],
       },
-      // Temporarily commenting out other extensions for troubleshooting
-      // backgroundImage: {
-      //   'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-      //   'gradient-conic':
-      //     'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-      // },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
     },
   },
   plugins: [],

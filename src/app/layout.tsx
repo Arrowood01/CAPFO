@@ -43,7 +43,7 @@ export default function RootLayout({
           </aside>
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col ml-64 bg-red-500"> {/* Offset for the sidebar AND ADDED RED BACKGROUND FOR TESTING */}
+          <div className="flex-1 flex flex-col ml-64"> {/* Offset for the sidebar, REMOVED RED BACKGROUND TEST */}
             <main className="flex-1 overflow-y-auto p-6 bg-white"> {/* Main content scrolls, has white background and padding */}
               <AuthGuard>
                 {children}

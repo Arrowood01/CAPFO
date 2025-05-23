@@ -30,9 +30,9 @@
 */
 
 body {
-  /* @apply font-sans; */ /* Temporarily comment out Tailwind apply for testing */
-  background-color: lime !important; /* Basic CSS test - should make background lime */
-  font-family: 'InterVariable', var(--font-geist-sans), sans-serif; /* Keep font stack for now */
+  @apply font-sans; /* Restore Tailwind apply */
+  background: var(--background); /* Restore original background */
+  font-family: 'InterVariable', var(--font-geist-sans), sans-serif; /* Ensure font stack is still here if @apply font-sans doesn't cover it fully due to overrides */
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
