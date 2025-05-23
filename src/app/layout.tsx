@@ -28,10 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <div className="flex h-screen bg-gray-100">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <div className="flex h-screen bg-gray-100"> {/* Ensure bg-gray-100 is on the main flex container */}
           {/* Fixed Sidebar */}
           <aside className="fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 space-y-6 shadow-lg z-10">
             <h2 className="text-2xl font-semibold border-b border-gray-700 pb-4">Capital Forecaster</h2>
@@ -43,11 +41,9 @@ export default function RootLayout({
             </nav>
           </aside>
 
-          {/* Main Content Area: Needs padding on the left to not be overlapped by the fixed sidebar */}
-          {/* Main Content Area: Needs padding on the left to not be overlapped by the fixed sidebar */}
-          <div className="flex-1 flex flex-col overflow-y-auto ml-64"> {/* ml-64 to offset for the sidebar width */}
-            {/* <Navigation />  Removed existing top navigation */}
-            <main className="flex-1 bg-white p-6"> {/* Ensure main content takes available space and has padding */}
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col ml-64"> {/* Offset for the sidebar */}
+            <main className="flex-1 overflow-y-auto p-6 bg-white"> {/* Main content scrolls, has white background and padding */}
               <AuthGuard>
                 {children}
               </AuthGuard>

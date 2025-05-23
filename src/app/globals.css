@@ -5,7 +5,8 @@
 @tailwind utilities;
 
 :root {
-  --font-mono: var(--font-geist-mono); /* Keep Geist Mono for mono needs */
+  --font-geist-sans: "Geist Sans", sans-serif; /* Define Geist Sans for Tailwind */
+  --font-geist-mono: "Geist Mono", monospace; /* Define Geist Mono for Tailwind */
   --background: #ffffff;
   --foreground: #111827;
   --primary-blue: #2563eb;
@@ -15,20 +16,21 @@
 }
 
 /*
-  The @theme inline block is specific to some Tailwind configurations (like Next.js App Router with certain plugins or older setups).
-  If it's not strictly needed by a specific plugin you're using, it might be redundant or could conflict.
-  For now, I'll keep it as it was present, but if issues persist, this could be a point of investigation.
+  Removing the @theme inline block to simplify and rely on standard Tailwind behavior.
+  If specific theme variables are needed for JS access or complex theming,
+  they should be managed through Tailwind's theme configuration (tailwind.config.ts)
+  or CSS custom properties directly without the @theme directive.
 */
+/*
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* --font-sans is not needed here if InterVariable is directly applied to body */
   --font-mono: var(--font-mono);
 }
-
+*/
 
 body {
-  font-family: 'InterVariable', sans-serif; /* Directly apply InterVariable */
+  font-family: 'InterVariable', var(--font-geist-sans), sans-serif; /* Apply InterVariable, fallback to Geist Sans */
   background: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
