@@ -605,13 +605,13 @@ const DashboardPage: React.FC = () => {
   }];
 
   return (
-    <div className="p-6 space-y-8"> {/* Added more padding and consistent spacing */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Capital Asset Forecast</h1>
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
+      <h1 className="text-3xl font-bold mb-6">Capital Asset Forecast</h1>
 
       {/* Forecast Health Check Section */}
       {forecastAnalysisDetails && !loading && (
-        <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">Forecast Health Check</h2>
+        <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Forecast Health Check</h2>
           {(overdueAssetsCount > 0 || isYebBelowTarget || isUnderfunded) ? (
             <ul className="list-disc pl-5 space-y-2">
               {overdueAssetsCount > 0 && (
@@ -642,8 +642,8 @@ const DashboardPage: React.FC = () => {
 
       {/* Suggested Monthly Deposit Section */}
       {forecastAnalysisDetails && !loading && suggestedMonthlyDepositPerUnit > 0 && (
-        <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-3">Suggested Monthly Deposit</h2>
+        <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200 mb-8">
+          <h2 className="text-xl font-semibold mb-3">Suggested Monthly Deposit</h2>
           <p className="text-sm text-gray-600 leading-relaxed mb-2">
             Based on your current forecast, we suggest a per-unit monthly deposit of:
           </p>
@@ -654,11 +654,11 @@ const DashboardPage: React.FC = () => {
       )}
 
       {/* Filters Section */}
-      <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Filters & Settings</h2>
+      <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Filters & Settings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Forecast Range</label>
+            <label className="text-sm font-medium">Forecast Range</label>
             <div className="flex space-x-2">
               {[1, 5, 10, 15].map((year) => (
                 <button
@@ -683,40 +683,40 @@ const DashboardPage: React.FC = () => {
             <li>Annual Deposit: <span className="font-medium text-indigo-400">${activeAnnualDeposit.toLocaleString()}</span></li>
           </ul>
         </div>
-        <div>
-          <label htmlFor="community" className="block text-sm font-medium text-gray-700 mb-1">Community</label>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="community" className="text-sm font-medium">Community</label>
           <select
             id="community"
             multiple
             value={selectedCommunities}
             onChange={(e) => setSelectedCommunities(Array.from(e.target.selectedOptions, option => option.value))}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-24 shadow-sm"
+            className="p-2 rounded border border-gray-300 h-24"
           >
             {allCommunities.map(comm => <option key={comm.id} value={comm.id}>{comm.name}</option>)}
           </select>
           <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple.</p>
         </div>
 
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="category" className="text-sm font-medium">Category</label>
           <select
             id="category"
             value={selectedCategory || ''}
             onChange={(e) => setSelectedCategory(e.target.value || null)}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm"
+            className="p-2 rounded border border-gray-300"
           >
             <option value="">All Categories</option>
             {allCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </select>
         </div>
 
-        <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status (Optional)</label>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="status" className="text-sm font-medium">Status (Optional)</label>
           <select
             id="status"
             value={selectedStatus || ''}
             onChange={(e) => setSelectedStatus(e.target.value || null)}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm"
+            className="p-2 rounded border border-gray-300"
           >
             <option value="">Any Status</option>
             <option value="active">Active</option>
@@ -727,7 +727,7 @@ const DashboardPage: React.FC = () => {
       <div className="mt-6 flex justify-end">
           <button
             onClick={handleRefreshForecast}
-            className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150 disabled:bg-gray-400"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
             disabled={loading}
           >
             {loading ? 'Refreshing...' : 'Refresh Forecast'}
@@ -745,9 +745,9 @@ const DashboardPage: React.FC = () => {
       {error && <p className="text-red-600 bg-red-100 p-4 rounded-md mb-6 shadow text-center">{error}</p>}
 
       {!loading && !error && forecastedAssets.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"> {/* Increased gap */}
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Forecasted Costs by Year</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"> {/* Consistent gap */}
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4">Forecasted Costs by Year</h2>
             <Doughnut
               data={barChartData}
               options={{
@@ -762,8 +762,8 @@ const DashboardPage: React.FC = () => {
               plugins={doughnutChartPlugins}
             />
           </div>
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Cost by Category</h2>
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4">Cost by Category</h2>
             <Pie
               data={pieChartData}
               options={{
@@ -778,8 +778,8 @@ const DashboardPage: React.FC = () => {
             />
           </div>
           {costPerUnitChartData.labels && costPerUnitChartData.labels.length > 0 && (
-            <div className="bg-white shadow-md rounded-lg p-6 lg:col-span-2">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Cost Per Unit by Community</h2>
+            <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200 lg:col-span-2">
+              <h2 className="text-xl font-semibold mb-4">Cost Per Unit by Community</h2>
               <Bar
                 data={costPerUnitChartData}
                 options={{
@@ -809,9 +809,9 @@ const DashboardPage: React.FC = () => {
 
       {/* Table Section */}
       {!loading && forecastedAssets.length > 0 && (
-        <div className="bg-white shadow-md rounded-lg p-6">
+        <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Forecasted Assets</h2>
+            <h2 className="text-2xl font-semibold">Forecasted Assets</h2>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -824,7 +824,7 @@ const DashboardPage: React.FC = () => {
               </label>
               <button
                 onClick={handleExportToCSV}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
               >
                 Export to CSV
               </button>

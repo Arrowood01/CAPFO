@@ -100,11 +100,11 @@ const ColumnMapper = ({
 
   if (!dataPreview || dataPreview.length === 0) {
     return (
-      <div className="p-4 border rounded-lg shadow-sm bg-white text-black border-[var(--border-blue)]"> {/* White bg, black text, blue border */}
+      <div> {/* Outer card styling removed */}
         <p>No data available for mapping. Please upload a file first.</p>
         <button
             onClick={onReset}
-            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-[var(--primary-blue)] rounded-md hover:bg-[var(--primary-blue-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Blue button */
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
             Upload New File
         </button>
@@ -113,34 +113,34 @@ const ColumnMapper = ({
   }
 
   return (
-    <div className="p-4 border rounded-lg shadow-sm bg-white border-[var(--border-blue)]"> {/* White bg, blue border */}
-      <h2 className="text-xl font-semibold mb-4 text-black">Map Columns</h2> {/* Black text */}
-      <p className="text-sm text-gray-700 mb-1"> {/* Lighter black text */}
+    <div> {/* Outer card styling removed */}
+      {/* h2 title removed */}
+      <p className="text-sm text-gray-700 mb-1">
         Preview of the first 5 data rows (starting from row 10 of your file).
       </p>
-      <p className="text-sm text-gray-700 mb-4"> {/* Lighter black text */}
+      <p className="text-sm text-gray-700 mb-4">
         Select the corresponding field for each column from your uploaded sheet.
       </p>
 
       {validationError && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md"> {/* Error messages remain red for visibility */}
+        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md">
           <p>{validationError}</p>
         </div>
       )}
 
       <div className="overflow-x-auto mb-6">
-        <table className="min-w-full divide-y divide-gray-300 border border-gray-300"> {/* Adjusted border color */}
-          <thead className="bg-gray-100"> {/* Lighter gray for table head */}
+        <table className="min-w-full divide-y divide-gray-300 border border-gray-300">
+          <thead className="bg-gray-100">
             <tr>
               {Array.from({ length: numColumns }).map((_, colIndex) => (
-                <th key={colIndex} className="px-3 py-2 text-left text-xs font-medium text-black uppercase tracking-wider"> {/* Black text for header */}
+                <th key={colIndex} className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">
                   <select
                     value={mappings[colIndex] || ''}
                     onChange={(e) => handleMappingChange(colIndex, e.target.value)}
-                    className="block w-full p-2 border-gray-300 rounded-md shadow-sm focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm text-black" /* Blue focus, black text */
+                    className="p-2 rounded border border-gray-300 block w-full"
                   >
                     {MAPPING_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="text-black"> {/* Black text for options */}
+                      <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
                     ))}
@@ -151,9 +151,9 @@ const ColumnMapper = ({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {dataPreview.map((row, rowIndex) => (
-              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}> {/* Alternating row colors */}
+              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                 {row.map((cell, cellIndex) => (
-                  <td key={cellIndex} className="px-3 py-2 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs"> {/* Lighter black for cell text */}
+                  <td key={cellIndex} className="px-3 py-2 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">
                     {String(cell !== null && cell !== undefined ? cell : '')}
                   </td>
                 ))}
@@ -166,13 +166,13 @@ const ColumnMapper = ({
       <div className="flex justify-between items-center">
         <button
           onClick={onReset}
-          className="px-4 py-2 text-sm font-medium text-black bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Black text, gray bg, blue focus */
+          className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition"
         >
           Back to Upload
         </button>
         <button
           onClick={handleConfirm}
-          className="px-6 py-2 text-sm font-medium text-white bg-[var(--primary-blue)] rounded-md hover:bg-[var(--primary-blue-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Blue button */
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
           Confirm Mappings
         </button>

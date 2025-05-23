@@ -81,25 +81,22 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onReset }) => 
               return row.filter((_, colIdx) => columnsToKeep[colIdx]);
             });
             
-            // If all columns were filtered out (e.g., sheet was truly empty or only empty columns had data)
             if (filteredJsonData.length > 0 && filteredJsonData[0].length === 0 && jsonData[0].length > 0) {
                  setError('All columns appear to be empty in the first 20 data rows. Please check your file.');
                  setFileName(null);
                  event.target.value = '';
                  return;
             }
-            if (filteredJsonData.length === 0 && jsonData.length > 0) { // Should not happen if jsonData.length > 0
+            if (filteredJsonData.length === 0 && jsonData.length > 0) { 
                  setError('No data rows found after attempting to filter empty columns.');
                  setFileName(null);
                  event.target.value = '';
                  return;
             }
 
-            jsonData = filteredJsonData; // Use the filtered data
+            jsonData = filteredJsonData; 
           }
           
-          // After filtering, if jsonData itself became empty (e.g. only one row which was all empty columns)
-          // or if the first row has no columns (meaning all columns were filtered out)
           if (jsonData.length === 0 || (jsonData[0] && jsonData[0].length === 0) ) {
              setError('The file contains no data in any columns after filtering empty ones, or all columns were empty.');
              setFileName(null);
@@ -128,7 +125,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onReset }) => 
   const handleResetClick = () => {
     setFileName(null);
     setError(null);
-    // Reset the input field value
     const input = document.getElementById('file-upload-input') as HTMLInputElement;
     if (input) {
       input.value = '';
@@ -137,13 +133,13 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onReset }) => 
   };
 
   return (
-    <div className="p-4 border rounded-lg shadow-sm bg-white border-[var(--border-blue)]"> {/* White bg, blue border */}
-      <h2 className="text-xl font-semibold mb-4 text-black">Upload Excel File</h2> {/* Black text */}
+    <div> {/* Outer card styling removed; will be handled by parent ImportPage */}
+      {/* h2 title removed; will be part of the card in ImportPage */}
       
       <div className="mb-4">
         <label
           htmlFor="file-upload-input"
-          className="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-[var(--primary-blue)] border border-transparent rounded-md cursor-pointer hover:bg-[var(--primary-blue-hover)] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[var(--primary-blue)]" /* Blue button style for label */
+          className="block w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition text-center cursor-pointer"
         >
           {fileName ? `Selected: ${fileName}` : 'Choose .xlsx File'}
         </label>
@@ -152,26 +148,26 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onReset }) => 
           type="file"
           accept=".xlsx"
           onChange={handleFileChange}
-          className="sr-only" // Hidden, styled by label
+          className="sr-only"
         />
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md"> {/* Error messages remain red */}
+        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md">
           <p>{error}</p>
         </div>
       )}
 
       {fileName && !error && (
-        <p className="mb-4 text-sm text-green-700"> {/* Darker green for success text on white */}
-          File &quot;{fileName}&quot; selected. Ready for mapping.
+        <p className="mb-4 text-sm text-green-700">
+          File "{fileName}" selected. Ready for mapping.
         </p>
       )}
       
-      {(fileName || error) && ( /* Show reset button only if a file is selected or an error occurred */
+      {(fileName || error) && (
         <button
           onClick={handleResetClick}
-          className="w-full mt-2 px-4 py-2 text-sm font-medium text-black bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)] disabled:opacity-50" /* Gray button for reset */
+          className="w-full mt-2 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition disabled:opacity-50"
         >
           Reset Upload
         </button>

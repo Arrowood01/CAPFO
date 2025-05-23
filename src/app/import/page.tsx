@@ -311,32 +311,38 @@ const ImportPage = () => {
 
 
   return (
-    <div className="container mx-auto p-4 md:p-8 bg-white text-black"> {/* Enforce white background and black text */}
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-black">Import Equipment Data</h1> {/* Black text */}
-        <p className="mt-2 text-gray-700"> {/* Slightly lighter black for subtext if desired, or use text-black */}
+        <h1 className="text-3xl font-bold mb-2">Import Equipment Data</h1>
+        <p className="text-base mb-6">
           Upload an XLSX file, map the columns, and preview your data before final import.
         </p>
       </header>
 
       <div className="space-y-8">
         {currentStep === 'upload' && (
-          <FileUpload onFileProcessed={handleFileProcessed} onReset={handleReset} />
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4">Step 1: Upload File</h2>
+            <FileUpload onFileProcessed={handleFileProcessed} onReset={handleReset} />
+          </div>
         )}
 
         {currentStep === 'map' && rawSheetData && (
-          <ColumnMapper
-            dataPreview={rawSheetData.slice(0, 5)} // Preview first 5 data rows (original rows 10-14)
-            allUploadedData={rawSheetData}
-            onMappingConfirm={handleMappingConfirm}
-            onReset={handleReset}
-          />
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4">Step 2: Map Columns</h2>
+            <ColumnMapper
+              dataPreview={rawSheetData.slice(0, 5)} // Preview first 5 data rows (original rows 10-14)
+              allUploadedData={rawSheetData}
+              onMappingConfirm={handleMappingConfirm}
+              onReset={handleReset}
+            />
+          </div>
         )}
 
         {/* Debug Display for Mappings */}
         {(currentStep === 'assign' || currentStep === 'preview') && receivedMappingsDebug && (
-          <div className="my-4 p-4 border border-yellow-500 bg-yellow-50 rounded-md">
-            <h3 className="text-lg font-semibold text-yellow-700">Debug: Received Mappings from ColumnMapper</h3>
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <h3 className="text-lg font-semibold mb-2">Debug: Received Mappings from ColumnMapper</h3>
             <pre className="text-xs text-yellow-800 whitespace-pre-wrap break-all">
               {JSON.stringify(receivedMappingsDebug, null, 2)}
             </pre>
@@ -345,8 +351,8 @@ const ImportPage = () => {
 
         {/* New Debug Display for TransformData Log */}
         {(currentStep === 'assign' || currentStep === 'preview') && transformDataLog.length > 0 && (
-          <div className="my-4 p-4 border border-cyan-500 bg-cyan-50 rounded-md">
-            <h3 className="text-lg font-semibold text-cyan-700">Debug: TransformData Execution Log</h3>
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <h3 className="text-lg font-semibold mb-2">Debug: TransformData Execution Log</h3>
             <pre className="text-xs text-cyan-800 whitespace-pre-wrap break-all" style={{ maxHeight: '300px', overflowY: 'auto' }}>
               {transformDataLog.join('\n')}
             </pre>
@@ -354,22 +360,22 @@ const ImportPage = () => {
         )}
 
         {currentStep === 'assign' && transformedData && (
-          <div className="bg-white p-6 rounded-lg shadow-md border border-[var(--border-blue)]"> {/* White bg, blue border */}
-            <h2 className="text-2xl font-semibold mb-6 text-black">Assign Community</h2> {/* Black text */}
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4">Step 3: Assign Community</h2>
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
-              <div>
-                <label htmlFor="community-select" className="block text-sm font-medium text-black mb-1"> {/* Black text */}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="community-select" className="text-sm font-medium">
                   Assign to Community
                 </label>
                 <select
                   id="community-select"
                   value={selectedCommunityId || ''}
                   onChange={(e) => setSelectedCommunityId(e.target.value)}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base text-black border-gray-300 focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm rounded-md shadow-sm" /* Black text for select, blue focus */
+                  className="p-2 rounded border border-gray-300"
                 >
                   <option value="" disabled>Select a community</option>
                   {communities.map((community) => (
-                    <option key={community.id} value={community.id} className="text-black"> {/* Ensure option text is black */}
+                    <option key={community.id} value={community.id}>
                       {community.name}
                     </option>
                   ))}
@@ -381,7 +387,7 @@ const ImportPage = () => {
               <button
                 type="button"
                 onClick={handleReset}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-black hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)]" /* Black text, light gray hover, blue focus */
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition"
               >
                 Start Over
               </button>
@@ -389,7 +395,7 @@ const ImportPage = () => {
                 type="button"
                 onClick={handleAssignConfirm}
                 disabled={!selectedCommunityId} // Only depends on selectedCommunityId now
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[var(--primary-blue)] hover:bg-[var(--primary-blue-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-blue)] disabled:bg-gray-400 disabled:cursor-not-allowed" /* Blue background, white text */
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
               >
                 Confirm Assignment & Preview
               </button>
@@ -398,14 +404,17 @@ const ImportPage = () => {
         )}
 
         {currentStep === 'preview' && transformedData && selectedCommunityId && ( // Removed selectedCategoryId
-          <TransformedDataPreview
-            transformedData={transformedData} // This will now contain category_name
-            onStartOver={handleReset}
-            communityId={selectedCommunityId} // communityId is still needed
-            // categoryId prop removed
-            onImport={handleActualImport}
-            // The import button inside TransformedDataPreview will call this onImport
-          />
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4">Step 4: Preview & Import</h2>
+            <TransformedDataPreview
+              transformedData={transformedData} // This will now contain category_name
+              onStartOver={handleReset}
+              communityId={selectedCommunityId} // communityId is still needed
+              // categoryId prop removed
+              onImport={handleActualImport}
+              // The import button inside TransformedDataPreview will call this onImport
+            />
+          </div>
         )}
       </div>
     </div>

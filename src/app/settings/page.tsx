@@ -656,119 +656,135 @@ const SettingsPage = () => {
 
 
   return (
-    <div className="p-6 space-y-8 bg-white text-black min-h-screen"> {/* White bg, black text */}
-      <h1 className="text-3xl font-bold text-black">Settings</h1> {/* Black text */}
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
+      <h1 className="text-3xl font-bold mb-6">Settings</h1>
 
       {/* Global Inflation Rate Section */}
-      <section className="p-6 bg-white shadow-lg rounded-lg border border-[var(--border-blue)]"> {/* Blue border */}
-        <h2 className="text-xl font-semibold text-black mb-4">Global Inflation Rate</h2> {/* Black text */}
+      <section className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+        <h2 className="text-xl font-semibold mb-4">Global Inflation Rate</h2>
         {loadingInflation ? (
-          <p className="text-black">Loading inflation rate...</p>
+          <p>Loading inflation rate...</p>
         ) : (
           <div className="flex items-center space-x-3">
-            <input
-              type="number"
-              value={inflationRate}
-              onChange={handleInflationRateChange}
-              min="0"
-              step="0.01"
-              className="mt-1 block w-40 px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm" /* Black text, blue focus */
-              placeholder="e.g., 2.5"
-            />
-            <span className="text-black">%</span> {/* Black text */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="inflationRateInput" className="text-sm font-medium sr-only">Inflation Rate</label>
+              <input
+                id="inflationRateInput"
+                type="number"
+                value={inflationRate}
+                onChange={handleInflationRateChange}
+                min="0"
+                step="0.01"
+                className="p-2 rounded border border-gray-300 w-40"
+                placeholder="e.g., 2.5"
+              />
+            </div>
+            <span>%</span>
             <button
               onClick={updateInflationRate}
               disabled={loadingInflation || String(inflationRate) === String(initialInflationRate)}
-              className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)] disabled:bg-gray-400" /* Blue button */
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
             >
               {loadingInflation ? 'Saving...' : 'Save Rate'}
             </button>
           </div>
         )}
-        <p className="mt-2 text-sm text-gray-700"> {/* Lighter black text */}
+        <p className="mt-2 text-sm text-gray-700">
           Set the global annual inflation rate. This will be used in forecasts.
         </p>
       </section>
 
       {/* Manage Communities Section */}
-      <section className="p-6 bg-white shadow-lg rounded-lg border border-[var(--border-blue)]"> {/* Blue border */}
-        <h2 className="text-xl font-semibold text-black mb-4">Manage Communities</h2> {/* Black text */}
-        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
-          <input
-            type="text"
-            value={newCommunityData.name}
-            onChange={(e) => setNewCommunityData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="New community name"
-            className="md:col-span-1 mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
-          />
-          <input
-            type="number"
-            value={newCommunityData.unit_count}
-            onChange={(e) => setNewCommunityData(prev => ({ ...prev, unit_count: e.target.value === '' ? '' : parseInt(e.target.value, 10) }))}
-            placeholder="Number of Units (optional)"
-            min="0"
-            className="md:col-span-1 mt-1 block w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
-          />
+      <section className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+        <h2 className="text-xl font-semibold mb-4">Manage Communities</h2>
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="newCommunityName" className="text-sm font-medium">New Community Name</label>
+            <input
+              id="newCommunityName"
+              type="text"
+              value={newCommunityData.name}
+              onChange={(e) => setNewCommunityData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Community name"
+              className="p-2 rounded border border-gray-300"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="newCommunityUnits" className="text-sm font-medium">Number of Units (Optional)</label>
+            <input
+              id="newCommunityUnits"
+              type="number"
+              value={newCommunityData.unit_count}
+              onChange={(e) => setNewCommunityData(prev => ({ ...prev, unit_count: e.target.value === '' ? '' : parseInt(e.target.value, 10) }))}
+              placeholder="Units"
+              min="0"
+              className="p-2 rounded border border-gray-300"
+            />
+          </div>
           <button
             onClick={handleAddCommunity}
-            className="md:col-span-1 px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)]"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition md:col-span-1 self-end"
           >
             Add Community
           </button>
         </div>
-        {loadingCommunities ? <p className="text-black">Loading communities...</p> : (
+        {loadingCommunities ? <p>Loading communities...</p> : (
           <ul className="space-y-2">
             {communities.map((community) => (
               <li key={community.id} className="p-3 bg-gray-50 border border-gray-200 rounded-md">
                 {editingCommunityId === community.id ? (
-                  // Editing Community Name/Units
                   <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={editingCommunityData.name}
-                      onChange={(e) => setEditingCommunityData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"
-                    />
-                    <input
-                      type="number"
-                      value={editingCommunityData.unit_count ?? ''}
-                      onChange={(e) => setEditingCommunityData(prev => ({ ...prev, unit_count: e.target.value === '' ? null : parseInt(e.target.value, 10) }))}
-                      placeholder="Number of Units (optional)"
-                      min="0"
-                      className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"
-                    />
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor={`editCommName-${community.id}`} className="text-sm font-medium">Community Name</label>
+                      <input
+                        id={`editCommName-${community.id}`}
+                        type="text"
+                        value={editingCommunityData.name}
+                        onChange={(e) => setEditingCommunityData(prev => ({ ...prev, name: e.target.value }))}
+                        className="p-2 rounded border border-gray-300 w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor={`editCommUnits-${community.id}`} className="text-sm font-medium">Number of Units (Optional)</label>
+                      <input
+                        id={`editCommUnits-${community.id}`}
+                        type="number"
+                        value={editingCommunityData.unit_count ?? ''}
+                        onChange={(e) => setEditingCommunityData(prev => ({ ...prev, unit_count: e.target.value === '' ? null : parseInt(e.target.value, 10) }))}
+                        placeholder="Units"
+                        min="0"
+                        className="p-2 rounded border border-gray-300 w-full"
+                      />
+                    </div>
                     <div className="flex space-x-2 justify-end">
-                      <button onClick={() => handleSaveCommunity(community.id)} className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600">Save Name/Units</button>
-                      <button onClick={() => setEditingCommunityId(null)} className="px-3 py-1 bg-gray-400 text-white rounded-md hover:bg-gray-500">Cancel</button>
+                      <button onClick={() => handleSaveCommunity(community.id)} className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition">Save Name/Units</button>
+                      <button onClick={() => setEditingCommunityId(null)} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-300 transition">Cancel</button>
                     </div>
                   </div>
                 ) : (
-                  // Displaying Community Info (and no forecast settings form is open for this community)
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="font-medium text-black">{community.name}</span>
+                      <span className="font-medium">{community.name}</span>
                       {community.unit_count !== null && community.unit_count !== undefined && (
                         <span className="text-sm text-gray-600 ml-2">({community.unit_count} units)</span>
                       )}
                     </div>
                     <div className="space-x-2">
-                      <button onClick={() => handleEditCommunity(community)} className="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">Edit Name/Units</button>
-                      {/* The "Forecast Settings" button is removed as it's now inline with <details> */}
-                      <button onClick={() => handleDeleteCommunity(community.id)} className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600">Delete</button>
+                      <button onClick={() => handleEditCommunity(community)} className="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600 transition">Edit Name/Units</button>
+                      <button onClick={() => handleDeleteCommunity(community.id)} className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Delete</button>
                     </div>
                   </div>
                 )}
 
-                {/* Inline Community Forecast Settings Form using <details> */}
                 <details className="mt-2 p-3 bg-white border rounded-md">
                   <summary className="font-semibold text-gray-700 cursor-pointer">Forecast Settings</summary>
-                  {/* Ensure allCommunitySettings[community.id] exists or provide defaults */}
                   {['annual_deposit', 'monthly_per_unit', 'investment_rate', 'inflation_rate', 'forecast_years', 'target_yeb', 'alert_threshold_percent'].map((key) => (
-                    <div key={key} className="mt-2">
-                      <label className="block text-sm font-medium text-gray-700 capitalize">{key.replace(/_/g, ' ')}</label>
+                    <div key={key} className="flex flex-col gap-2 mt-2">
+                      <label htmlFor={`commSetting-${community.id}-${key}`} className="text-sm font-medium capitalize">{key.replace(/_/g, ' ')}</label>
                       <input
+                        id={`commSetting-${community.id}-${key}`}
                         type="number"
-                        name={key} // Added name attribute for easier handling if needed
+                        name={key}
                         value={(allCommunitySettings[community.id]?.[key as keyof CommunitySettingsFormState] as string | number) ?? ''}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -776,12 +792,12 @@ const SettingsPage = () => {
                             ...prev,
                             [community.id]: {
                               ...prev[community.id],
-                              community_id: community.id, // Ensure community_id is present
-                              [key]: value === '' ? '' : parseFloat(value), // Store as number or empty string for controlled input
-                            } as CommunitySettingsFormState, // Cast to ensure type correctness
+                              community_id: community.id,
+                              [key]: value === '' ? '' : parseFloat(value),
+                            } as CommunitySettingsFormState,
                           }));
                         }}
-                        className="w-full mt-1 p-2 border rounded-md text-black bg-white focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"
+                        className="p-2 rounded border border-gray-300 w-full"
                         step="0.01"
                         placeholder={key.includes('rate') || key.includes('percent') ? 'e.g., 5 for 5%' : 'Enter value'}
                       />
@@ -790,7 +806,7 @@ const SettingsPage = () => {
                   <button
                     onClick={() => handleSaveCommunitySettings(community.id)}
                     disabled={loadingCommunitySettings}
-                    className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition mt-4 disabled:bg-gray-400"
                   >
                     {loadingCommunitySettings ? 'Saving...' : 'Save Forecast Settings'}
                   </button>
@@ -803,53 +819,63 @@ const SettingsPage = () => {
       </section>
 
       {/* Manage Asset Categories Section */}
-      <section className="p-6 bg-white shadow-lg rounded-lg border border-[var(--border-blue)]"> {/* Blue border */}
-        <h2 className="text-xl font-semibold text-black mb-4">Manage Asset Categories</h2> {/* Black text */}
-        {/* Add New Category Form */}
+      <section className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+        <h2 className="text-xl font-semibold mb-4">Manage Asset Categories</h2>
         <div className="mb-6 p-4 border border-gray-200 rounded-lg">
-          <h3 className="text-lg font-medium text-black mb-2">Add New Category</h3>
+          <h3 className="text-lg font-semibold mb-2">Add New Category</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <input
-              type="text"
-              name="name"
-              value={newCategory.name || ''}
-              onChange={handleNewCategoryChange}
-              placeholder="Category Name"
-              className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
-            />
-            <input
-              type="number"
-              name="lifespan_years"
-              value={newCategory.lifespan_years || ''}
-              onChange={handleNewCategoryChange}
-              placeholder="Lifespan (Years)"
-              min="0"
-              className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
-            />
-            <input
-              type="number"
-              name="avg_replacement_cost"
-              value={newCategory.avg_replacement_cost || ''}
-              onChange={handleNewCategoryChange}
-              placeholder="Avg. Replacement Cost ($)"
-              min="0"
-              step="0.01"
-              className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
-            />
+            <div className="flex flex-col gap-2">
+              <label htmlFor="newCatName" className="text-sm font-medium">Category Name</label>
+              <input
+                id="newCatName"
+                type="text"
+                name="name"
+                value={newCategory.name || ''}
+                onChange={handleNewCategoryChange}
+                placeholder="Category Name"
+                className="p-2 rounded border border-gray-300"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="newCatLifespan" className="text-sm font-medium">Lifespan (Years)</label>
+              <input
+                id="newCatLifespan"
+                type="number"
+                name="lifespan_years"
+                value={newCategory.lifespan_years || ''}
+                onChange={handleNewCategoryChange}
+                placeholder="Lifespan (Years)"
+                min="0"
+                className="p-2 rounded border border-gray-300"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="newCatCost" className="text-sm font-medium">Avg. Replacement Cost ($)</label>
+              <input
+                id="newCatCost"
+                type="number"
+                name="avg_replacement_cost"
+                value={newCategory.avg_replacement_cost || ''}
+                onChange={handleNewCategoryChange}
+                placeholder="Avg. Replacement Cost ($)"
+                min="0"
+                step="0.01"
+                className="p-2 rounded border border-gray-300"
+              />
+            </div>
             <button
               onClick={handleAddAssetCategory}
-              className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded-md hover:bg-[var(--primary-blue-hover)]"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition self-end"
             >
               Add Category
             </button>
           </div>
         </div>
 
-        {/* Categories List/Table */}
-        {loadingCategories ? <p className="text-black">Loading asset categories...</p> : (
+        {loadingCategories ? <p>Loading asset categories...</p> : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-300 border border-gray-300"> {/* Adjusted border color */}
-              <thead className="bg-gray-100"> {/* Lighter gray for table head */}
+            <table className="min-w-full divide-y divide-gray-300 border border-gray-300">
+              <thead className="bg-gray-100">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Lifespan (Yrs)</th>
@@ -863,27 +889,27 @@ const SettingsPage = () => {
                     {editingCategoryId === category.id ? (
                       <>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="text" name="name" value={editingCategory.name || ''} onChange={handleEditingCategoryChange} className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
+                          <input type="text" name="name" value={editingCategory.name || ''} onChange={handleEditingCategoryChange} className="p-2 rounded border border-gray-300 w-full"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="number" name="lifespan_years" value={editingCategory.lifespan_years || ''} onChange={handleEditingCategoryChange} min="0" className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
+                          <input type="number" name="lifespan_years" value={editingCategory.lifespan_years || ''} onChange={handleEditingCategoryChange} min="0" className="p-2 rounded border border-gray-300 w-full"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input type="number" name="avg_replacement_cost" value={editingCategory.avg_replacement_cost || ''} onChange={handleEditingCategoryChange} min="0" step="0.01" className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"/>
+                          <input type="number" name="avg_replacement_cost" value={editingCategory.avg_replacement_cost || ''} onChange={handleEditingCategoryChange} min="0" step="0.01" className="p-2 rounded border border-gray-300 w-full"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button onClick={() => handleSaveCategory(category.id)} className="text-green-600 hover:text-green-800">Save</button>
-                          <button onClick={() => setEditingCategoryId(null)} className="text-gray-600 hover:text-gray-800">Cancel</button>
+                          <button onClick={() => handleSaveCategory(category.id)} className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 transition">Save</button>
+                          <button onClick={() => setEditingCategoryId(null)} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-300 transition">Cancel</button>
                         </td>
                       </>
                     ) : (
                       <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-black">{category.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-black">{category.lifespan ?? 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-black">{category.avg_replacement_cost?.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) ?? 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{category.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{category.lifespan ?? 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{category.avg_replacement_cost?.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) ?? 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button onClick={() => handleEditCategory(category)} className="text-yellow-600 hover:text-yellow-800">Edit</button>
-                          <button onClick={() => handleDeleteAssetCategory(category.id)} className="text-red-600 hover:text-red-800">Delete</button>
+                          <button onClick={() => handleEditCategory(category)} className="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600 transition">Edit</button>
+                          <button onClick={() => handleDeleteAssetCategory(category.id)} className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Delete</button>
                         </td>
                       </>
                     )}
