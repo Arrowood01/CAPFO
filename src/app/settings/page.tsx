@@ -29,6 +29,28 @@ interface AssetCategory {
   // user_id: string; // If categories are user-specific
 }
 
+type CommunitySettings = {
+  community_id: string;
+  annual_deposit: number;
+  monthly_per_unit: number;
+  investment_rate: number;
+  inflation_rate: number;
+  forecast_years: number;
+  target_yeb: number;
+  alert_threshold_percent: number;
+};
+
+// Type for managing form state for community forecast settings, allowing strings for number inputs
+type CommunitySettingsFormState = {
+  community_id?: string;
+  annual_deposit?: string | number;
+  monthly_per_unit?: string | number;
+  investment_rate?: string | number;
+  inflation_rate?: string | number;
+  forecast_years?: string | number;
+  target_yeb?: string | number;
+  alert_threshold_percent?: string | number;
+};
 // Type for managing form state for asset categories, allowing strings for number inputs
 interface AssetCategoryFormState {
   id?: string;
@@ -56,6 +78,12 @@ const SettingsPage = () => {
   const [editingCategory, setEditingCategory] = useState<AssetCategoryFormState>({});
   const [newCategory, setNewCategory] = useState<AssetCategoryFormState>({ name: '', lifespan_years: '', avg_replacement_cost: '' });
   const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // --- Community Forecast Settings ---
+  const [allCommunitySettings, setAllCommunitySettings] = useState<Record<string, CommunitySettings>>({});
+  const [editingCommunitySettingsId, setEditingCommunitySettingsId] = useState<string | null>(null);
+  const [editingCommunitySettingsData, setEditingCommunitySettingsData] = useState<CommunitySettingsFormState>({});
+  const [loadingCommunitySettings, setLoadingCommunitySettings] = useState(false); // Initially false, true when fetching for a specific community
 
 
   // Fetch initial settings (inflation rate)
@@ -318,6 +346,133 @@ const SettingsPage = () => {
     }
   };
 
+  // --- Community Forecast Settings ---
+  const fetchCommunitySettings = useCallback(async (communityId: string) => {
+    if (!communityId) return;
+    setLoadingCommunitySettings(true);
+    try {
+      const { data, error } = await supabase
+        .from('community_settings')
+        .select('*')
+        .eq('community_id', communityId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no row found, which is fine
+        throw error;
+      }
+      if (data) {
+        setAllCommunitySettings(prev => ({ ...prev, [communityId]: data }));
+        setEditingCommunitySettingsData(data); // Pre-fill form if editing
+      } else {
+        // No settings found, initialize with defaults or empty
+        const defaultSettings: CommunitySettingsFormState = {
+          community_id: communityId,
+          annual_deposit: '',
+          monthly_per_unit: '',
+          investment_rate: '',
+          inflation_rate: '', // Or fetch global inflation rate
+          forecast_years: '',
+          target_yeb: '',
+          alert_threshold_percent: '',
+        };
+        setEditingCommunitySettingsData(defaultSettings);
+        // Optionally, store these defaults in allCommunitySettings if you want to show them before saving
+        // setAllCommunitySettings(prev => ({ ...prev, [communityId]: defaultSettings as CommunitySettings }));
+      }
+    } catch (error: unknown) {
+      console.error(`Error fetching community settings for ${communityId}:`, error);
+      if (error instanceof Error) {
+        showToast(`Error fetching settings: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while fetching settings.', 'error');
+      }
+    } finally {
+      setLoadingCommunitySettings(false);
+    }
+  }, []);
+
+  const handleEditCommunitySettings = (communityId: string) => {
+    setEditingCommunitySettingsId(communityId);
+    const existingSettings = allCommunitySettings[communityId];
+    if (existingSettings) {
+      setEditingCommunitySettingsData(existingSettings);
+    } else {
+      // Fetch if not already loaded, or initialize with defaults
+      fetchCommunitySettings(communityId);
+    }
+  };
+
+  const handleCommunitySettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditingCommunitySettingsData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveCommunitySettings = async (communityId: string) => {
+    if (!editingCommunitySettingsData) return;
+
+    // Basic validation (expand as needed)
+    const { annual_deposit, monthly_per_unit, investment_rate, inflation_rate, forecast_years, target_yeb, alert_threshold_percent } = editingCommunitySettingsData;
+
+    const parseAndValidateNumber = (val: string | number | undefined, fieldName: string, allowNegative = false, isRate = false) => {
+        if (val === undefined || val === null || String(val).trim() === '') {
+            showToast(`${fieldName} is required.`, 'error');
+            return undefined;
+        }
+        const num = parseFloat(String(val));
+        if (isNaN(num)) {
+            showToast(`${fieldName} must be a valid number.`, 'error');
+            return undefined;
+        }
+        if (!allowNegative && num < 0) {
+            showToast(`${fieldName} must be non-negative.`, 'error');
+            return undefined;
+        }
+        return isRate ? num / 100 : num; // Convert percentage to decimal if it's a rate
+    };
+
+    const payload: Partial<CommunitySettings> = { community_id: communityId };
+
+    payload.annual_deposit = parseAndValidateNumber(annual_deposit, "Annual Deposit");
+    payload.monthly_per_unit = parseAndValidateNumber(monthly_per_unit, "Monthly Per Unit Contribution");
+    payload.investment_rate = parseAndValidateNumber(investment_rate, "Investment Rate", false, true);
+    payload.inflation_rate = parseAndValidateNumber(inflation_rate, "Inflation Rate", false, true); // Assuming this is specific community inflation, or could be global
+    payload.forecast_years = parseAndValidateNumber(forecast_years, "Forecast Years");
+    payload.target_yeb = parseAndValidateNumber(target_yeb, "Target YEB");
+    payload.alert_threshold_percent = parseAndValidateNumber(alert_threshold_percent, "Alert Threshold Percent", false, true);
+
+    // Check if any validation failed
+    if (Object.values(payload).some(val => val === undefined && val !== communityId)) { // community_id can be string
+        return; // Validation error messages already shown
+    }
+
+
+    setLoadingCommunitySettings(true);
+    try {
+      const { data, error } = await supabase
+        .from('community_settings')
+        .upsert(payload as CommunitySettings, { onConflict: 'community_id' })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setAllCommunitySettings(prev => ({ ...prev, [communityId]: data }));
+        setEditingCommunitySettingsId(null); // Close editing form
+        showToast('Community forecast settings saved!', 'success');
+      }
+    } catch (error: unknown) {
+      console.error(`Error saving community settings for ${communityId}:`, error);
+      if (error instanceof Error) {
+        showToast(`Error saving settings: ${error.message}`, 'error');
+      } else {
+        showToast('An unexpected error occurred while saving settings.', 'error');
+      }
+    } finally {
+      setLoadingCommunitySettings(false);
+    }
+  };
+
 
   // --- Asset Categories ---
   const fetchAssetCategories = useCallback(async () => {
@@ -565,6 +720,7 @@ const SettingsPage = () => {
             {communities.map((community) => (
               <li key={community.id} className="p-3 bg-gray-50 border border-gray-200 rounded-md">
                 {editingCommunityId === community.id ? (
+                  // Editing Community Name/Units
                   <div className="space-y-2">
                     <input
                       type="text"
@@ -581,18 +737,144 @@ const SettingsPage = () => {
                       className="w-full px-2 py-1 text-black bg-white border border-gray-300 rounded-md focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)]"
                     />
                     <div className="flex space-x-2 justify-end">
-                      <button onClick={() => handleSaveCommunity(community.id)} className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600">Save</button>
+                      <button onClick={() => handleSaveCommunity(community.id)} className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600">Save Name/Units</button>
                       <button onClick={() => setEditingCommunityId(null)} className="px-3 py-1 bg-gray-400 text-white rounded-md hover:bg-gray-500">Cancel</button>
                     </div>
                   </div>
+                ) : editingCommunitySettingsId === community.id ? (
+                  // Editing Community Forecast Settings
+                  <div className="mt-0 p-0 space-y-3"> {/* Adjusted margin/padding */}
+                    <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-md font-semibold text-black">Forecast Settings: {community.name}</h4>
+                        {/* Removed the "Edit Name/Units" button from here to avoid nested forms/complexity */}
+                    </div>
+                    {loadingCommunitySettings && editingCommunitySettingsId === community.id ? <p className="text-black">Loading settings...</p> : (
+                      <>
+                        {/* Annual Deposit */}
+                        <div>
+                          <label htmlFor={`annual_deposit_${community.id}`} className="block text-sm font-medium text-gray-700">Annual Deposit ($)</label>
+                          <input
+                            type="number"
+                            name="annual_deposit"
+                            id={`annual_deposit_${community.id}`}
+                            value={editingCommunitySettingsData.annual_deposit ?? ''}
+                            onChange={handleCommunitySettingsChange}
+                            className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+                            placeholder="e.g., 10000"
+                          />
+                        </div>
+                        {/* Monthly Per Unit Contribution */}
+                        <div>
+                          <label htmlFor={`monthly_per_unit_${community.id}`} className="block text-sm font-medium text-gray-700">Monthly Per Unit Contribution ($)</label>
+                          <input
+                            type="number"
+                            name="monthly_per_unit"
+                            id={`monthly_per_unit_${community.id}`}
+                            value={editingCommunitySettingsData.monthly_per_unit ?? ''}
+                            onChange={handleCommunitySettingsChange}
+                            className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+                            placeholder="e.g., 50"
+                          />
+                        </div>
+                        {/* Investment Rate */}
+                        <div>
+                          <label htmlFor={`investment_rate_${community.id}`} className="block text-sm font-medium text-gray-700">Investment Rate (%)</label>
+                          <input
+                            type="number"
+                            name="investment_rate"
+                            id={`investment_rate_${community.id}`}
+                            value={editingCommunitySettingsData.investment_rate ?? ''}
+                            onChange={handleCommunitySettingsChange}
+                            step="0.01"
+                            className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+                            placeholder="e.g., 5 for 5%"
+                          />
+                        </div>
+                        {/* Inflation Rate (Community Specific) */}
+                        <div>
+                          <label htmlFor={`inflation_rate_comm_${community.id}`} className="block text-sm font-medium text-gray-700">Specific Inflation Rate (%) (Overrides Global)</label>
+                          <input
+                            type="number"
+                            name="inflation_rate"
+                            id={`inflation_rate_comm_${community.id}`}
+                            value={editingCommunitySettingsData.inflation_rate ?? ''}
+                            onChange={handleCommunitySettingsChange}
+                            step="0.01"
+                            className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+                            placeholder="e.g., 3.0 for 3%"
+                          />
+                        </div>
+                        {/* Forecast Years */}
+                        <div>
+                          <label htmlFor={`forecast_years_${community.id}`} className="block text-sm font-medium text-gray-700">Forecast Years</label>
+                          <input
+                            type="number"
+                            name="forecast_years"
+                            id={`forecast_years_${community.id}`}
+                            value={editingCommunitySettingsData.forecast_years ?? ''}
+                            onChange={handleCommunitySettingsChange}
+                            className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+                            placeholder="e.g., 30"
+                          />
+                        </div>
+                        {/* Target YEB */}
+                        <div>
+                          <label htmlFor={`target_yeb_${community.id}`} className="block text-sm font-medium text-gray-700">Target Year-End Balance ($)</label>
+                          <input
+                            type="number"
+                            name="target_yeb"
+                            id={`target_yeb_${community.id}`}
+                            value={editingCommunitySettingsData.target_yeb ?? ''}
+                            onChange={handleCommunitySettingsChange}
+                            className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+                            placeholder="e.g., 500000"
+                          />
+                        </div>
+                        {/* Alert Threshold Percent */}
+                        <div>
+                          <label htmlFor={`alert_threshold_percent_${community.id}`} className="block text-sm font-medium text-gray-700">Funding Alert Threshold (%)</label>
+                          <input
+                            type="number"
+                            name="alert_threshold_percent"
+                            id={`alert_threshold_percent_${community.id}`}
+                            value={editingCommunitySettingsData.alert_threshold_percent ?? ''}
+                            onChange={handleCommunitySettingsChange}
+                            step="0.1"
+                            className="mt-1 block w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary-blue)] focus:border-[var(--primary-blue)] sm:text-sm"
+                            placeholder="e.g., 70 for 70%"
+                          />
+                        </div>
+
+                        <div className="flex space-x-2 mt-3 justify-end">
+                          <button
+                            onClick={() => handleSaveCommunitySettings(community.id)}
+                            disabled={loadingCommunitySettings}
+                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400"
+                          >
+                            {loadingCommunitySettings ? 'Saving...' : 'Save Forecast Settings'}
+                          </button>
+                          <button onClick={() => { setEditingCommunitySettingsId(null); setEditingCommunitySettingsData({}); }} className="px-3 py-1 bg-gray-400 text-white rounded-md hover:bg-gray-500">Cancel</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 ) : (
-                  <div className="flex items-center justify-between">
+                  // Displaying Community Info
+                  <div className="flex justify-between items-center">
                     <div>
-                      <span className="text-black font-medium">{community.name}</span>
-                      <span className="text-sm text-gray-600 ml-2">(Units: {community.unit_count ?? 'N/A'})</span>
+                      <span className="font-medium text-black">{community.name}</span>
+                      {community.unit_count !== null && community.unit_count !== undefined && (
+                        <span className="text-sm text-gray-600 ml-2">({community.unit_count} units)</span>
+                      )}
                     </div>
                     <div className="space-x-2">
-                      <button onClick={() => handleEditCommunity(community)} className="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">Edit</button>
+                      <button onClick={() => { setEditingCommunitySettingsId(null); handleEditCommunity(community);}} className="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">Edit Name/Units</button>
+                      <button
+                        onClick={() => { setEditingCommunityId(null); handleEditCommunitySettings(community.id); }}
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        Forecast Settings
+                      </button>
                       <button onClick={() => handleDeleteCommunity(community.id)} className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600">Delete</button>
                     </div>
                   </div>
