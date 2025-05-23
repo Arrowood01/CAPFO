@@ -1,4 +1,4 @@
-@import "@fontsource/inter/variable"; /* Try without .css extension */
+@import "@fontsource/inter/variable.css"; /* Revert to explicit .css extension */
 
 @tailwind base;
 @tailwind components;
