@@ -10,6 +10,8 @@ import {
   calculatePerUnitCost,
   type Asset as ForecastingAsset,
   type ForecastedReplacement,
+  type ForecastResult, // Added
+  type AssetWithAge, // Added
   // type CommunitySpecificSettings // This was removed from forecastingUtils as params are direct
 } from '@/lib/forecastingUtils';
 
@@ -19,6 +21,8 @@ interface CommunitySpecificSettingsInDashboard {
   investment_rate?: number;
   forecast_years?: number;
   annual_deposit?: number;
+  initial_reserve_balance?: number; // Added for health check
+  target_reserve_balance?: number; // Added for health check
 }
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
@@ -87,6 +91,13 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // State for Forecast Health Check
+  const [forecastAnalysisDetails, setForecastAnalysisDetails] = useState<ForecastResult | null>(null);
+  const [overdueAssetsCount, setOverdueAssetsCount] = useState<number>(0);
+  const [isYebBelowTarget, setIsYebBelowTarget] = useState<boolean>(false);
+  const [isUnderfunded, setIsUnderfunded] = useState<boolean>(false);
+
+
   // State for displaying active forecast settings
   const [activeInflationRate, setActiveInflationRate] = useState<number>(globalInflationRate);
   const [activeInvestmentRate, setActiveInvestmentRate] = useState<number>(defaultGlobalInvestmentRate);
@@ -139,13 +150,15 @@ const DashboardPage: React.FC = () => {
              investment_rate: s.investment_rate,
              forecast_years: s.forecast_years,
              annual_deposit: s.annual_deposit,
+             initial_reserve_balance: s.initial_reserve_balance,
+             target_reserve_balance: s.target_reserve_balance,
            };
          });
          setAllCommunitySettings(settingsMap);
        }
        // Potentially fetch global investment_rate and annual_deposit if they are stored in 'settings' table
        // For now, using local defaults: defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit
-      } catch (err) {
+     } catch (err) {
         console.error("Error fetching initial data:", err);
         setError('Failed to load initial filter data.');
       } finally {
@@ -234,6 +247,8 @@ const DashboardPage: React.FC = () => {
       const investmentRate = effectiveCommunitySettings?.investment_rate ?? defaultGlobalInvestmentRate;
       const forecastYears = effectiveCommunitySettings?.forecast_years ?? forecastRange;
       const annualDeposit = effectiveCommunitySettings?.annual_deposit ?? defaultGlobalAnnualDeposit;
+      const initialReserveBalance = effectiveCommunitySettings?.initial_reserve_balance ?? 0; // Default to 0
+      const targetYEB = effectiveCommunitySettings?.target_reserve_balance ?? 0; // Default to 0, will be set by user
 
       // Update active settings for display
       setActiveInflationRate(inflation);
@@ -241,39 +256,48 @@ const DashboardPage: React.FC = () => {
       setActiveForecastYears(forecastYears);
       setActiveAnnualDeposit(annualDeposit);
 
-      const rawForecastResults: ForecastedReplacement[] = generateForecast({
-        assets: assetsForForecast, // Now passing the assets
+      const forecastResult: ForecastResult = generateForecast({
+        assets: assetsForForecast,
         inflationRate: inflation,
         investmentRate,
         forecastYears,
         annualDeposit,
+        initialReserveBalance,
       });
 
-      const finalForecastedAssets: ForecastedAsset[] = rawForecastResults.map(fr => {
-        const originalDashboardAsset = assetsData.find((a: DashboardAsset) => a.id === fr.asset.id);
-        if (!originalDashboardAsset) {
-          return {
-            id: fr.asset.id,
-            description: fr.asset.name,
-            purchase_price: fr.asset.purchase_price,
-            install_date: fr.asset.install_date,
-            categories: { name: fr.category, id: 'unknown', lifespan: fr.asset.category.lifespan, avg_replacement_cost: fr.asset.category.avg_replacement_cost },
-            communities: { name: fr.community, id: 'unknown' },
-            replacement_year: fr.year,
-            projected_cost: fr.cost,
-          } as ForecastedAsset;
-        }
+      setForecastAnalysisDetails(forecastResult);
+
+      // Populate forecastedAssets for charts and tables (existing logic)
+      const finalForecastedAssets: ForecastedAsset[] = forecastResult.forecastedReplacements.map(fr => {
+        // The fr.asset is already AssetWithAge, but we might only need DashboardAsset props here
+        // or ensure ForecastedAsset can accommodate AssetWithAge if needed.
+        // For now, we map to the existing ForecastedAsset structure.
+        const originalAssetDetails = assetsData.find((a: DashboardAsset) => a.id === fr.asset.id);
         return {
-          ...originalDashboardAsset,
+          id: fr.asset.id,
+          unit_number: originalAssetDetails?.unit_number,
+          install_date: fr.asset.install_date,
+          description: fr.asset.name,
+          purchase_price: fr.asset.purchase_price,
+          categories: originalAssetDetails?.categories, // Keep original category structure for display
+          communities: originalAssetDetails?.communities, // Keep original community structure for display
           replacement_year: fr.year,
           projected_cost: fr.cost,
         };
       });
       setForecastedAssets(finalForecastedAssets);
+
+      // Calculate Health Check Metrics
+      setOverdueAssetsCount(forecastResult.detailedAssets.filter(a => a.isOverdue).length);
+      setIsYebBelowTarget(forecastResult.finalReserveBalance < targetYEB);
+      // Assuming "underfunded" means total deposits don't cover total expenses in the period
+      setIsUnderfunded(forecastResult.totalDepositsInForecastPeriod < forecastResult.totalExpensesInForecastPeriod);
+
     } catch (err) {
       console.error("Error running forecast:", err);
       setError('Failed to run forecast.');
       setForecastedAssets([]);
+      setForecastAnalysisDetails(null); // Clear analysis on error
     } finally {
       setLoading(false);
     }
@@ -314,6 +338,8 @@ const DashboardPage: React.FC = () => {
            investment_rate: s.investment_rate,
            forecast_years: s.forecast_years,
            annual_deposit: s.annual_deposit,
+           initial_reserve_balance: s.initial_reserve_balance,
+           target_reserve_balance: s.target_reserve_balance,
          };
        });
        setAllCommunitySettings(settingsMap);
@@ -548,6 +574,38 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Capital Asset Forecast</h1>
+
+      {/* Forecast Health Check Section */}
+      {forecastAnalysisDetails && !loading && (
+        <div className="mb-6 p-6 border rounded-xl shadow-lg bg-white">
+          <h2 className="text-xl font-semibold mb-3 text-gray-800">Forecast Health Check</h2>
+          {(overdueAssetsCount > 0 || isYebBelowTarget || isUnderfunded) ? (
+            <ul className="list-disc pl-5 space-y-1">
+              {overdueAssetsCount > 0 && (
+                <li className="text-sm text-red-600">
+                  <span className="font-semibold">{overdueAssetsCount}</span> asset(s) are beyond their expected lifespan.
+                </li>
+              )}
+              {isYebBelowTarget && (
+                <li className="text-sm text-yellow-600">
+                  Projected Year-End Reserve Balance (
+                  <span className="font-semibold">${forecastAnalysisDetails.finalReserveBalance.toLocaleString()}</span>
+                  ) may fall below the target.
+                </li>
+              )}
+              {isUnderfunded && (
+                <li className="text-sm text-yellow-600">
+                  Annual deposits (Total: <span className="font-semibold">${forecastAnalysisDetails.totalDepositsInForecastPeriod.toLocaleString()}</span>)
+                  may be insufficient to match future expenses (Total: <span className="font-semibold">${forecastAnalysisDetails.totalExpensesInForecastPeriod.toLocaleString()}</span>)
+                  over the forecast period.
+                </li>
+              )}
+            </ul>
+          ) : (
+            <p className="text-sm text-green-600">Forecast health looks good based on current parameters!</p>
+          )}
+        </div>
+      )}
 
       {/* Filters Section */}
       <div className="mb-6 p-6 border rounded-xl shadow-lg">
