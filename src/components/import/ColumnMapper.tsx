@@ -104,7 +104,7 @@ const ColumnMapper = ({
         <p>No data available for mapping. Please upload a file first.</p>
         <button
             onClick={onReset}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            className="mt-4 bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition"
         >
             Upload New File
         </button>
@@ -172,7 +172,7 @@ const ColumnMapper = ({
         </button>
         <button
           onClick={handleConfirm}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          className="bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition"
         >
           Confirm Mappings
         </button>

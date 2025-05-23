@@ -139,7 +139,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onReset }) => 
       <div className="mb-4">
         <label
           htmlFor="file-upload-input"
-          className="block w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition text-center cursor-pointer"
+          className="block w-full bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition text-center cursor-pointer"
         >
           {fileName ? `Selected: ${fileName}` : 'Choose .xlsx File'}
         </label>

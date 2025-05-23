@@ -395,7 +395,7 @@ const ImportPage = () => {
                 type="button"
                 onClick={handleAssignConfirm}
                 disabled={!selectedCommunityId} // Only depends on selectedCommunityId now
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
+                className="bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition disabled:bg-gray-400"
               >
                 Confirm Assignment & Preview
               </button>

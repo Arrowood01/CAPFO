@@ -32,7 +32,7 @@ const TransformedDataPreview = ({
         <p>No data to display or import has been completed. Please complete the mapping and assignment process first.</p>
         <button
             onClick={onStartOver}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            className="mt-4 bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition"
         >
             Start Over
         </button>
@@ -46,7 +46,7 @@ const TransformedDataPreview = ({
         <p>Community not assigned. Please go back and assign it.</p>
          <button
             onClick={onStartOver} // Or a more specific "go back to assignment" handler if available
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            className="mt-4 bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition"
         >
             Start Over
         </button>
@@ -129,7 +129,7 @@ const TransformedDataPreview = ({
           type="button"
           onClick={handleImportClick}
           disabled={isImporting || !communityId} // Removed categoryId from condition
-          className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isImporting ? 'Importing...' : `Import ${transformedData.length} Assets`}
         </button>

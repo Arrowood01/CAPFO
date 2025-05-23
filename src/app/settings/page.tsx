@@ -683,7 +683,7 @@ const SettingsPage = () => {
             <button
               onClick={updateInflationRate}
               disabled={loadingInflation || String(inflationRate) === String(initialInflationRate)}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
+              className="bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition disabled:bg-gray-400"
             >
               {loadingInflation ? 'Saving...' : 'Save Rate'}
             </button>
@@ -723,7 +723,7 @@ const SettingsPage = () => {
           </div>
           <button
             onClick={handleAddCommunity}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition md:col-span-1 self-end"
+            className="bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition md:col-span-1 self-end"
           >
             Add Community
           </button>
@@ -806,7 +806,7 @@ const SettingsPage = () => {
                   <button
                     onClick={() => handleSaveCommunitySettings(community.id)}
                     disabled={loadingCommunitySettings}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition mt-4 disabled:bg-gray-400"
+                    className="bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition mt-4 disabled:bg-gray-400"
                   >
                     {loadingCommunitySettings ? 'Saving...' : 'Save Forecast Settings'}
                   </button>
@@ -865,7 +865,7 @@ const SettingsPage = () => {
             </div>
             <button
               onClick={handleAddAssetCategory}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition self-end"
+              className="bg-primary text-white font-medium py-2 px-4 rounded hover:bg-primary-dark transition self-end"
             >
               Add Category
             </button>
