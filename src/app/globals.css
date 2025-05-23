@@ -1,4 +1,4 @@
-@import "@fontsource/inter/variable.css"; /* Revert to explicit .css extension */
+/* @import "@fontsource/inter/variable.css"; */ /* Removed as Inter font will be handled by next/font/google */
 
 @tailwind base;
 @tailwind components;

@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-// import { Geist, Geist_Mono } from "next/font/google"; // Geist imports removed as variables are not directly used in className
-import "./globals.css"; // Reverting to direct relative path for final test
+import { Inter } from 'next/font/google'; // Import Inter from next/font/google
+// import { Geist, Geist_Mono } from "next/font/google"; // Geist can be added back if needed
+import "./globals.css";
 // import Navigation from "@/components/Navigation"; // Navigation component removed
 import AuthGuard from "@/components/AuthGuard"; // Restore AuthGuard
 
-// const geistSans = Geist({ // No longer needed here if not applied to className
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter', // Define a CSS variable for Inter
+});
+
+// const geistSans = Geist({
 //   variable: "--font-geist-sans",
 //   subsets: ["latin"],
 // });
 
-// const geistMono = Geist_Mono({ // No longer needed here if not applied to className
+// const geistMono = Geist_Mono({
 //   variable: "--font-geist-mono",
 //   subsets: ["latin"],
 // });
-
-// Inter is now imported and applied globally via globals.css
-// Geist font variables are defined in globals.css and used in tailwind.config.ts
 
 export const metadata: Metadata = {
   title: "Capital Forecasting Tool", // Updated title
@@ -29,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased"> {/* Simplified className */}
+      <body className={`${inter.variable} antialiased`}> {/* Apply Inter variable to body */}
         <div className="flex h-screen bg-gray-100"> {/* Ensure bg-gray-100 is on the main flex container */}
           {/* Fixed Sidebar */}
           <aside className="fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 space-y-6 shadow-lg z-10">
