@@ -2,8 +2,7 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    "./src/**/*.{js,ts,jsx,tsx,mdx}", // Broadly scan the entire src directory
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",   // Scan a root app directory if it exists
+    "./src/**/*.{js,ts,jsx,tsx,mdx}", // Ensure this broadly scans all relevant files in src
   ],
   theme: {
     extend: {
