@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 // import { Geist, Geist_Mono } from "next/font/google"; // Geist imports removed as variables are not directly used in className
-import "./globals.css";
+import "../app/globals.css"; // Using a more explicit relative path
 // import Navigation from "@/components/Navigation"; // Navigation component removed
 import AuthGuard from "@/components/AuthGuard"; // Restore AuthGuard
 
@@ -43,7 +43,7 @@ export default function RootLayout({
           </aside>
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col ml-64"> {/* Offset for the sidebar */}
+          <div className="flex-1 flex flex-col ml-64 bg-red-500"> {/* Offset for the sidebar AND ADDED RED BACKGROUND FOR TESTING */}
             <main className="flex-1 overflow-y-auto p-6 bg-white"> {/* Main content scrolls, has white background and padding */}
               <AuthGuard>
                 {children}

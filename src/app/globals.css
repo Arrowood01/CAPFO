@@ -30,8 +30,9 @@
 */
 
 body {
-  @apply font-sans; /* Apply the font-sans defined in tailwind.config.ts */
-  background: var(--background);
+  /* @apply font-sans; */ /* Temporarily comment out Tailwind apply for testing */
+  background-color: lime !important; /* Basic CSS test - should make background lime */
+  font-family: 'InterVariable', var(--font-geist-sans), sans-serif; /* Keep font stack for now */
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
