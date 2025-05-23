@@ -9,8 +9,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['InterVariable', 'var(--font-geist-sans)', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['InterVariable', 'sans-serif'], // Simplified as per suggestion
+        mono: ['var(--font-geist-mono)', 'monospace'], // Retaining Geist Mono for mono
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

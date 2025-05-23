@@ -30,7 +30,7 @@
 */
 
 body {
-  font-family: 'InterVariable', var(--font-geist-sans), sans-serif; /* Apply InterVariable, fallback to Geist Sans */
+  @apply font-sans; /* Apply the font-sans defined in tailwind.config.ts */
   background: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
