@@ -1,13 +1,10 @@
-@import "@fontsource/inter/variable.css"; /* Import Inter font variable */
-@import "tailwindcss";
+@import "@fontsource/inter/variable.css"; /* Import Inter font variable first */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  /* --font-sans variable can be removed if InterVariable is directly applied in body,
-     or kept if you want to use it via Tailwind's font-sans utility class.
-     For direct application as requested: remove or comment out.
-     If keeping for Tailwind utility (e.g. className="font-sans"):
-     --font-sans: "InterVariable", var(--font-geist-sans);
-  */
   --font-mono: var(--font-geist-mono); /* Keep Geist Mono for mono needs */
   --background: #ffffff;
   --foreground: #111827;
@@ -17,23 +14,18 @@
   --border-blue: #93c5fd;
 }
 
+/*
+  The @theme inline block is specific to some Tailwind configurations (like Next.js App Router with certain plugins or older setups).
+  If it's not strictly needed by a specific plugin you're using, it might be redundant or could conflict.
+  For now, I'll keep it as it was present, but if issues persist, this could be a point of investigation.
+*/
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Ensure Tailwind's font-sans utility uses InterVariable if you keep the :root variable */
-  /* --font-sans: var(--font-sans); */
+  /* --font-sans is not needed here if InterVariable is directly applied to body */
   --font-mono: var(--font-mono);
 }
 
-/* Remove dark mode preference to enforce light theme */
-/*
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-*/
 
 body {
   font-family: 'InterVariable', sans-serif; /* Directly apply InterVariable */
