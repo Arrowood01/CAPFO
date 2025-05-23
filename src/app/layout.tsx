@@ -34,24 +34,27 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="flex h-screen">
-          <aside className="w-64 bg-gray-900 text-white p-6 space-y-4 flex-shrink-0">
-            <h2 className="text-xl font-semibold">Capital Forecaster</h2>
-            <nav className="space-y-2">
-              <a href="/dashboard" className="block hover:text-blue-400">Dashboard</a>
-              <a href="/portfolio" className="block hover:text-blue-400">Portfolio</a>
-              <a href="/reports" className="block hover:text-blue-400">Reports</a>
-              <a href="/settings" className="block hover:text-blue-400">Settings</a>
+        <div className="flex h-screen bg-gray-100">
+          {/* Fixed Sidebar */}
+          <aside className="fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 space-y-6 shadow-lg z-10">
+            <h2 className="text-2xl font-semibold border-b border-gray-700 pb-4">Capital Forecaster</h2>
+            <nav className="space-y-3">
+              <a href="/dashboard" className="block py-2 px-3 rounded-md hover:bg-gray-800 hover:text-blue-300 transition-colors duration-150">Dashboard</a>
+              <a href="/portfolio" className="block py-2 px-3 rounded-md hover:bg-gray-800 hover:text-blue-300 transition-colors duration-150">Portfolio</a>
+              <a href="/reports" className="block py-2 px-3 rounded-md hover:bg-gray-800 hover:text-blue-300 transition-colors duration-150">Reports</a>
+              <a href="/settings" className="block py-2 px-3 rounded-md hover:bg-gray-800 hover:text-blue-300 transition-colors duration-150">Settings</a>
             </nav>
           </aside>
-          <div className="flex-1 flex flex-col overflow-hidden"> {/* Main content area wrapper */}
+
+          {/* Main Content Area: Needs padding on the left to not be overlapped by the fixed sidebar */}
+          <div className="flex-1 flex flex-col overflow-hidden ml-64"> {/* ml-64 to offset for the sidebar width */}
             <Navigation /> {/* Existing top navigation */}
-            <main className="flex-1 overflow-y-auto bg-white container mx-auto px-4 py-8">
+            <main className="flex-1 overflow-y-auto bg-white p-6"> {/* Adjusted padding */}
               <AuthGuard>
                 {children}
               </AuthGuard>
             </main>
-            <footer className="bg-gray-50 text-center p-4 text-sm text-gray-700 border-t border-gray-200 flex-shrink-0">
+            <footer className="bg-gray-200 text-center p-4 text-sm text-gray-700 border-t border-gray-300 flex-shrink-0"> {/* Adjusted footer style */}
               © {new Date().getFullYear()} Capital Forecaster. All rights reserved.
             </footer>
           </div>
