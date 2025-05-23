@@ -481,13 +481,13 @@ const DashboardPage: React.FC = () => {
       const textX = Math.round((width - ctx.measureText(text).width) / 2);
       const textY = height / 2;
 
-      const titleText = "Total Sales"; 
+      const titleText = "Overall Total";
       const titleFontSize = (height / 200).toFixed(2);
       ctx.font = `bold ${titleFontSize}em var(--font-inter), bold ${titleFontSize}em sans-serif`;
       const titleX = Math.round((width - ctx.measureText(titleText).width) / 2);
       const titleY = height / 2 - parseFloat(fontSize) * 16; 
 
-      const subtitleText = "Accumulated Earnings"; 
+      const subtitleText = "Sum of Yearly Costs";
       const subtitleFontSize = (height / 260).toFixed(2);
       ctx.font = `${subtitleFontSize}em var(--font-inter), ${subtitleFontSize}em sans-serif`;
       const subtitleX = Math.round((width - ctx.measureText(subtitleText).width) / 2);
@@ -642,7 +642,7 @@ const DashboardPage: React.FC = () => {
       {!loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="p-6 border rounded-xl shadow-lg">
-            <h2 className="text-xl font-semibold mb-2 text-center">Total Sales</h2>
+            <h2 className="text-lg font-semibold text-gray-800">Forecasted Costs by Year</h2>
             <Doughnut 
               data={barChartData} 
               options={{ 
@@ -658,7 +658,7 @@ const DashboardPage: React.FC = () => {
             />
           </div>
           <div className="p-6 border rounded-xl shadow-lg">
-            <h2 className="text-xl font-semibold mb-2 text-center">Total Net Worth</h2>
+            <h2 className="text-lg font-semibold text-gray-800">Cost by Category</h2>
             <Pie 
               data={pieChartData} 
               options={{ 
@@ -674,7 +674,7 @@ const DashboardPage: React.FC = () => {
           </div>
           {costPerUnitChartData.labels && costPerUnitChartData.labels.length > 0 && (
             <div className="p-6 border rounded-xl shadow-lg lg:col-span-2">
-              <h2 className="text-xl font-semibold mb-2">Cost Per Unit by Community</h2>
+              <h2 className="text-lg font-semibold text-gray-800">Cost Per Unit by Community</h2>
               <Bar 
                 data={costPerUnitChartData} 
                 options={{ 
