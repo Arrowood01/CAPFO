@@ -6,7 +6,7 @@
 @import "@fontsource/inter/700.css";
 
 body {
-  @apply bg-gray-100 text-gray-800 font-sans antialiased;
+  @apply bg-contentBg text-defaultText font-sans antialiased;
 }
 
 /* Ensure input fields have black text (keeping this for now, can be reviewed) */
