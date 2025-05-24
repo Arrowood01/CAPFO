@@ -337,8 +337,8 @@ const DashboardPage: React.FC = () => {
         backgroundColor: '#0D69FF', // primary.DEFAULT
         borderColor: '#0D69FF',
         borderWidth: 1,
-        barThickness: 20, // Correctly placed on the dataset
-      },
+        barThickness: 20,
+      } as BarDataset, // Explicitly type as BarDataset
     ],
   };
   
