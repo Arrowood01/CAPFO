@@ -487,7 +487,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Forecast Health Check Section */}
       {forecastAnalysisDetails && !loading && (
-        <div className="mb-6 p-6 border rounded-xl shadow-lg bg-white">
+        <div className="mb-6 p-6 border rounded-xl shadow-lg bg-white min-h-[100px]"> {/* Added min-height */}
           <h2 className="text-xl font-semibold mb-3 text-gray-800">Forecast Health Check</h2>
           {(overdueAssetsCount > 0 || isYebBelowTarget || isUnderfunded) ? (
             <ul className="list-disc pl-5 space-y-1">
@@ -519,7 +519,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Suggested Monthly Deposit Section */}
       {forecastAnalysisDetails && !loading && suggestedMonthlyDepositPerUnit > 0 && (
-        <div className="p-4 bg-white rounded-md shadow-md mt-6 mb-6">
+        <div className="p-4 bg-white rounded-md shadow-md mt-6 mb-6 min-h-[80px]"> {/* Added min-height */}
           <h2 className="text-lg font-semibold text-gray-800 mb-2">Suggested Monthly Deposit</h2>
           <p className="text-sm text-gray-600">
             Based on your current forecast, we suggest a per-unit monthly deposit of:
@@ -626,26 +626,37 @@ const DashboardPage: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Forecasted Costs by Year</h2>
             {rechartsForecastByYearData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={rechartsForecastByYearData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tickFormatter={(value) => `$${value.toLocaleString()}`} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, "Total Cost"]} />
-                  <Legend wrapperStyle={{ fontSize: "14px" }} />
-                  <Bar dataKey="totalCost" name="Total Cost" fill={RECHARTS_COLORS[0]}>
+                <PieChart>
+                  <RechartsPie
+                    data={rechartsForecastByYearData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70} // To make it a doughnut chart
+                    outerRadius={100}
+                    fill="#8884d8"
+                    paddingAngle={1}
+                    dataKey="totalCost" // This is the 'value' for each segment
+                    nameKey="name"      // This is the 'name' for each segment (year)
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
                     {rechartsForecastByYearData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={RECHARTS_COLORS[index % RECHARTS_COLORS.length]} />
+                      <Cell key={`cell-fy-${index}`} fill={RECHARTS_COLORS[index % RECHARTS_COLORS.length]} />
                     ))}
-                  </Bar>
-                </BarChart>
+                  </RechartsPie>
+                  <Tooltip formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
+                  <Legend wrapperStyle={{ fontSize: "14px" }} />
+                </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-center text-gray-500">No data available for this chart.</p>
+              <div className="flex-grow flex items-center justify-center">
+                <p className="text-center text-gray-500">No data available for this chart.</p>
+              </div>
             )}
           </div>
 
           {/* Cost by Category - Pie Chart */}
-          <div className="p-6 border rounded-xl shadow-lg bg-white">
+          <div className="p-6 border rounded-xl shadow-lg bg-white min-h-[380px] flex flex-col"> {/* Added min-height and flex */}
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost by Category</h2>
             {rechartsPieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -669,12 +680,14 @@ const DashboardPage: React.FC = () => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-center text-gray-500">No data available for this chart.</p>
+              <div className="flex-grow flex items-center justify-center">
+                <p className="text-center text-gray-500">No data available for this chart.</p>
+              </div>
             )}
           </div>
 
           {/* Cost Per Unit by Community - Horizontal Bar Chart */}
-          <div className="p-6 border rounded-xl shadow-lg bg-white lg:col-span-2">
+          <div className="p-6 border rounded-xl shadow-lg bg-white lg:col-span-2 min-h-[380px] flex flex-col"> {/* Added min-height and flex */}
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost Per Unit by Community</h2>
             {rechartsCostPerUnitData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300 + rechartsCostPerUnitData.length * 20}>
@@ -697,7 +710,9 @@ const DashboardPage: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-center text-gray-500">No data available for this chart.</p>
+              <div className="flex-grow flex items-center justify-center">
+                <p className="text-center text-gray-500">No data available for this chart.</p>
+              </div>
             )}
           </div>
         </div>
