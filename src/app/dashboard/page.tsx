@@ -2,47 +2,40 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Doughnut, Pie, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'; // Removed unused ChartOptions
 import Papa from 'papaparse';
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie as RechartsPie, Cell
+} from 'recharts'; // Renamed Pie to RechartsPie, removed LabelList
 import {
   generateForecast,
   calculatePerUnitCost,
   type Asset as ForecastingAsset,
-  type ForecastResult, // Added
-  // type CommunitySpecificSettings // This was removed from forecastingUtils as params are direct
+  type ForecastResult,
 } from '@/lib/forecastingUtils';
 
-// Re-define CommunitySpecificSettings here if needed for state, or use a more generic Record type
 interface CommunitySpecificSettingsInDashboard {
   inflation_rate?: number;
   investment_rate?: number;
   forecast_years?: number;
   annual_deposit?: number;
-  initial_reserve_balance?: number; // Added for health check
-  target_reserve_balance?: number; // Added for health check
+  initial_reserve_balance?: number;
+  target_reserve_balance?: number;
 }
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+// Color Palette for Recharts (can be adapted or new ones defined)
+const RECHARTS_COLORS = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6c757d'];
 
-// Color Palette
-const CHART_COLORS = {
-  primary: '#5A3FFF',
-  tints: ['#7C6BFF', '#9D94FF', '#BEBEFF', '#DFDFFF'],
-};
-
-// Dashboard's representation of an asset (after fetching)
 interface DashboardAsset {
   id: string;
   unit_number?: string;
   install_date?: string;
-  description?: string; // For asset name
+  description?: string;
   purchase_price?: number;
   categories?: { id: string; name: string; lifespan: number | null; avg_replacement_cost: number | null };
   communities?: { id: string; name: string };
 }
 
-interface ForecastedAsset extends DashboardAsset { // Extended with forecast-specific fields
+interface ForecastedAsset extends DashboardAsset {
   replacement_year: number;
   projected_cost: number;
   isOverdue?: boolean;
@@ -61,18 +54,6 @@ interface Category {
   lifespan: number;
 }
 
-// Define a type for Chart.js data structure
-interface ChartJsData {
-  labels: string[];
-  datasets: Array<{
-    label?: string;
-    data: number[];
-    backgroundColor?: string | string[];
-    borderColor?: string | string[];
-    borderWidth?: number;
-  }>;
-}
-
 const DashboardPage: React.FC = () => {
   const [forecastRange, setForecastRange] = useState<number>(5);
   const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
@@ -81,31 +62,26 @@ const DashboardPage: React.FC = () => {
 
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
-  const [globalInflationRate, setGlobalInflationRate] = useState<number>(0.02); // Renamed for clarity
+  const [globalInflationRate, setGlobalInflationRate] = useState<number>(0.02);
   const [allCommunitySettings, setAllCommunitySettings] = useState<Record<string, CommunitySpecificSettingsInDashboard>>({});
-  // Add default values for other new global settings if they are intended to be configurable globally
-  const [defaultGlobalInvestmentRate] = useState<number>(0.005); // Example default
-  const [defaultGlobalAnnualDeposit] = useState<number>(0); // Example default
+  const [defaultGlobalInvestmentRate] = useState<number>(0.005);
+  const [defaultGlobalAnnualDeposit] = useState<number>(0);
 
   const [forecastedAssets, setForecastedAssets] = useState<ForecastedAsset[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State for Forecast Health Check
   const [forecastAnalysisDetails, setForecastAnalysisDetails] = useState<ForecastResult | null>(null);
   const [overdueAssetsCount, setOverdueAssetsCount] = useState<number>(0);
   const [isYebBelowTarget, setIsYebBelowTarget] = useState<boolean>(false);
   const [isUnderfunded, setIsUnderfunded] = useState<boolean>(false);
   const [suggestedMonthlyDepositPerUnit, setSuggestedMonthlyDepositPerUnit] = useState<number>(0);
 
-
-  // State for displaying active forecast settings
   const [activeInflationRate, setActiveInflationRate] = useState<number>(globalInflationRate);
   const [activeInvestmentRate, setActiveInvestmentRate] = useState<number>(defaultGlobalInvestmentRate);
   const [activeForecastYears, setActiveForecastYears] = useState<number>(forecastRange);
   const [activeAnnualDeposit, setActiveAnnualDeposit] = useState<number>(defaultGlobalAnnualDeposit);
   const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -128,17 +104,14 @@ const DashboardPage: React.FC = () => {
           .select('value')
           .eq('key', 'inflation_rate')
           .single();
-        if (settingsError && settingsError.code !== 'PGRST116') { // PGRST116: no row found, ok
+        if (settingsError && settingsError.code !== 'PGRST116') {
           console.error('Error fetching global inflation rate:', settingsError);
-          // Keep default globalInflationRate
         } else if (settingsData) {
           setGlobalInflationRate(parseFloat(settingsData.value) || 0.02);
         } else {
           console.warn('Global inflation rate not found in settings, using default.');
-          // Keep default globalInflationRate
         }
 
-       // Fetch all community settings
        const { data: communitySettingsData, error: communitySettingsError } = await supabase
          .from('community_settings')
          .select('*');
@@ -158,8 +131,6 @@ const DashboardPage: React.FC = () => {
          });
          setAllCommunitySettings(settingsMap);
        }
-       // Potentially fetch global investment_rate and annual_deposit if they are stored in 'settings' table
-       // For now, using local defaults: defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit
      } catch (err) {
         console.error("Error fetching initial data:", err);
         setError('Failed to load initial filter data.');
@@ -172,8 +143,6 @@ const DashboardPage: React.FC = () => {
 
   const runForecast = useCallback(async () => {
     if (!selectedCommunities.length && !selectedCategory && selectedCommunities.length === 0 && selectedCategory === null) {
-        // Condition to prevent running forecast if no filters are selected initially or explicitly cleared
-        // setForecastedAssets([]); // Optionally clear assets or show a message
         // return;
     }
     setLoading(true);
@@ -235,24 +204,18 @@ const DashboardPage: React.FC = () => {
         community: asset.communities?.name || 'Unknown Community',
       }));
 
-      // Determine community settings for the *first* selected community if multiple are selected.
-      // Or, decide on a strategy for multiple selections (e.g., average, or run forecast per community).
-      // For now, let's assume if multiple communities are selected, we use global/defaults,
-      // or if only one is selected, we use its specific settings.
       let effectiveCommunitySettings: CommunitySpecificSettingsInDashboard | undefined = undefined;
       if (selectedCommunities.length === 1) {
         effectiveCommunitySettings = allCommunitySettings[selectedCommunities[0]];
       }
       
-      // Prepare variables for the new generateForecast call structure
       const inflation = effectiveCommunitySettings?.inflation_rate ?? globalInflationRate;
       const investmentRate = effectiveCommunitySettings?.investment_rate ?? defaultGlobalInvestmentRate;
       const forecastYears = effectiveCommunitySettings?.forecast_years ?? forecastRange;
       const annualDeposit = effectiveCommunitySettings?.annual_deposit ?? defaultGlobalAnnualDeposit;
-      const initialReserveBalance = effectiveCommunitySettings?.initial_reserve_balance ?? 0; // Default to 0
-      const targetYEB = effectiveCommunitySettings?.target_reserve_balance ?? 0; // Default to 0, will be set by user
+      const initialReserveBalance = effectiveCommunitySettings?.initial_reserve_balance ?? 0;
+      const targetYEB = effectiveCommunitySettings?.target_reserve_balance ?? 0;
 
-      // Update active settings for display
       setActiveInflationRate(inflation);
       setActiveInvestmentRate(investmentRate);
       setActiveForecastYears(forecastYears);
@@ -269,7 +232,6 @@ const DashboardPage: React.FC = () => {
 
       setForecastAnalysisDetails(forecastResult);
 
-      // Populate forecastedAssets for charts and tables (existing logic)
       const finalForecastedAssets: ForecastedAsset[] = forecastResult.forecastedReplacements.map(fr => {
         const originalAssetDetails = assetsData.find((a: DashboardAsset) => a.id === fr.asset.id);
         const detailedAsset = forecastResult.detailedAssets.find(da => da.id === fr.asset.id);
@@ -289,20 +251,17 @@ const DashboardPage: React.FC = () => {
       });
       setForecastedAssets(finalForecastedAssets);
 
-      // Calculate Health Check Metrics
       setOverdueAssetsCount(forecastResult.detailedAssets.filter(a => a.isOverdue).length);
       setIsYebBelowTarget(forecastResult.finalReserveBalance < targetYEB);
-      // Assuming "underfunded" means total deposits don't cover total expenses in the period
       setIsUnderfunded(forecastResult.totalDepositsInForecastPeriod < forecastResult.totalExpensesInForecastPeriod);
 
-      // Calculate Suggested Monthly Deposit
       let totalUnitsInSelection = 0;
       if (selectedCommunities.length > 0) {
         totalUnitsInSelection = selectedCommunities.reduce((acc, communityId) => {
           const community = allCommunities.find(c => c.id === communityId);
           return acc + (community?.unit_count || 0);
         }, 0);
-      } else { // If no specific communities selected, consider all communities
+      } else {
         totalUnitsInSelection = allCommunities.reduce((acc, community) => acc + (community.unit_count || 0), 0);
       }
 
@@ -317,12 +276,15 @@ const DashboardPage: React.FC = () => {
       console.error("Error running forecast:", err);
       setError('Failed to run forecast.');
       setForecastedAssets([]);
-      setForecastAnalysisDetails(null); // Clear analysis on error
-      setSuggestedMonthlyDepositPerUnit(0); // Clear on error
+      setForecastAnalysisDetails(null);
+      setSuggestedMonthlyDepositPerUnit(0);
     } finally {
       setLoading(false);
     }
-  }, [forecastRange, selectedCommunities, selectedCategory, globalInflationRate, allCommunitySettings, defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit]);
+  }, [
+    forecastRange, selectedCommunities, selectedCategory, globalInflationRate, allCommunitySettings,
+    defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit, activeForecastYears, allCommunities // Added missing dependencies
+  ]);
 
   useEffect(() => {
     runForecast();
@@ -342,10 +304,9 @@ const DashboardPage: React.FC = () => {
       } else if (settingsData) {
         setGlobalInflationRate(parseFloat(settingsData.value) || 0.02);
       } else {
-         setGlobalInflationRate(0.02); // Fallback if not found
+         setGlobalInflationRate(0.02);
       }
 
-     // Re-fetch all community settings on manual refresh
      const { data: communitySettingsData, error: csError } = await supabase
        .from('community_settings')
        .select('*');
@@ -365,7 +326,6 @@ const DashboardPage: React.FC = () => {
        });
        setAllCommunitySettings(settingsMap);
      }
-     // Also re-fetch global investment/annual deposit if they become configurable
 
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
@@ -408,189 +368,118 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const barChartLabels = forecastedAssets.reduce((acc: string[], asset: ForecastedAsset) => {
-    if (!acc.includes(asset.replacement_year.toString())) {
-      acc.push(asset.replacement_year.toString());
-    }
-    return acc;
-  }, [] as string[]).sort();
+  // --- Recharts Data Transformation Functions ---
 
-  const barChartBackgroundColors = barChartLabels.map((_: string, index: number) => CHART_COLORS.tints[index % CHART_COLORS.tints.length]);
+  // 1. Forecasted Costs by Year
+  const getRechartsForecastByYearData = () => {
+    if (!forecastedAssets || forecastedAssets.length === 0) return [];
+    const costsByYear: Record<string, number> = forecastedAssets.reduce((acc, asset) => {
+      const year = asset.replacement_year.toString();
+      acc[year] = (acc[year] || 0) + asset.projected_cost;
+      return acc;
+    }, {} as Record<string, number>);
 
-  const barChartData: ChartJsData = {
-    labels: barChartLabels,
-    datasets: [
-      {
-        label: 'Total Forecasted Cost',
-        data: [], 
-        backgroundColor: barChartBackgroundColors,
-      },
-    ],
+    return Object.entries(costsByYear)
+      .map(([year, totalCost]) => ({
+        name: year, // 'name' is conventional for Recharts XAxis dataKey
+        totalCost,
+      }))
+      .sort((a, b) => parseInt(a.name) - parseInt(b.name));
   };
-  if (barChartData.datasets.length > 0) {
-    barChartData.datasets[0].data = barChartLabels.map((year: string) =>
-      forecastedAssets
-        .filter((asset: ForecastedAsset) => asset.replacement_year.toString() === year)
-        .reduce((sum: number, asset: ForecastedAsset) => sum + asset.projected_cost, 0)
-    );
-  }
 
-  const pieChartLabels = allCategories
-    .filter((cat: Category) => forecastedAssets.some((asset: ForecastedAsset) => asset.categories?.id === cat.id))
-    .map((cat: Category) => cat.name);
+  // 2. Cost by Category - Pie Chart
+  const getRechartsPieData = () => {
+    if (!forecastedAssets || forecastedAssets.length === 0 || !allCategories || allCategories.length === 0) return [];
+    
+    const costsByCategory: Record<string, number> = forecastedAssets.reduce((acc, asset) => {
+      const categoryName = asset.categories?.name || 'Unknown Category';
+      acc[categoryName] = (acc[categoryName] || 0) + asset.projected_cost;
+      return acc;
+    }, {} as Record<string, number>);
 
-  const pieChartBackgroundColors = pieChartLabels.map((_: string, index: number) => CHART_COLORS.tints[index % CHART_COLORS.tints.length]);
-
-  const pieChartData: ChartJsData = {
-    labels: pieChartLabels,
-    datasets: [
-      {
-        data: [], 
-        backgroundColor: pieChartBackgroundColors,
-      },
-    ],
+    return Object.entries(costsByCategory)
+      .map(([name, value]) => ({
+        name,
+        value, // 'value' is conventional for Recharts Pie dataKey
+      }))
+      .filter(item => item.value > 0) // Only include categories with costs
+      .sort((a, b) => b.value - a.value); // Optional: sort by value
   };
-  if (pieChartData.datasets.length > 0) {
-    pieChartData.datasets[0].data = pieChartLabels
-      .map((label: string) => {
-        const category = allCategories.find((cat: Category) => cat.name === label);
-        if (!category) return 0;
-        return forecastedAssets
-          .filter((asset: ForecastedAsset) => asset.categories?.id === category.id)
-          .reduce((sum: number, asset: ForecastedAsset) => sum + asset.projected_cost, 0);
-      }
-    );
-  }
 
-  const [costPerUnitChartData, setCostPerUnitChartData] = useState<ChartJsData>({ labels: [], datasets: [] });
+  // 3. Cost Per Unit by Community - Horizontal Bar Chart
+  const getRechartsCostPerUnitData = () => {
+    if (!forecastedAssets || forecastedAssets.length === 0 || !allCommunities || allCommunities.length === 0) return [];
 
-  useEffect(() => {
-    if (forecastedAssets.length > 0 && allCommunities.length > 0) {
-      const perUnitCosts: { communityName: string; costPerUnit: number }[] = allCommunities
-        .map((community: Community) => {
-          if ((community.unit_count ?? 0) > 0) {
-            const communityAssets = forecastedAssets.filter(
-              (asset: ForecastedAsset) => asset.communities?.id === community.id || asset.communities?.name === community.name
-            );
-            const totalCommunityForecastCost = communityAssets.reduce(
-              (sum: number, asset: ForecastedAsset) => sum + asset.projected_cost,
-              0
-            );
-            const costPerUnit = calculatePerUnitCost(totalCommunityForecastCost, community.unit_count!);
-            return { communityName: community.name, costPerUnit };
-          }
-          return null;
-        })
-        .filter(item => item !== null) as { communityName: string; costPerUnit: number }[];
-
-      perUnitCosts.sort((a, b) => b.costPerUnit - a.costPerUnit);
-
-      setCostPerUnitChartData({
-        labels: perUnitCosts.map(item => item.communityName),
-        datasets: [
-          {
-            label: 'Cost Per Unit ($)',
-            data: perUnitCosts.map(item => item.costPerUnit),
-            backgroundColor: CHART_COLORS.primary,
-            borderColor: CHART_COLORS.primary,
-            borderWidth: 1,
-          },
-        ],
-      });
-    } else {
-      setCostPerUnitChartData({ labels: [], datasets: [] });
-    }
-  }, [forecastedAssets, allCommunities]);
-
-  const doughnutChartPlugins = [{
-    id: 'doughnutText',
-    beforeDraw(chart: ChartJS) {
-      const {width, height, ctx} = chart;
-      ctx.save(); 
-      const fontSize = (height / 160).toFixed(2);
-      ctx.font = `var(--font-inter), ${fontSize}em sans-serif`;
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#000';
-
-      let total = 0;
-      if (chart.data.datasets.length > 0 && chart.data.datasets[0].data) {
-        const datasetData = chart.data.datasets[0].data;
-        const numericData = Array.isArray(datasetData) 
-          ? datasetData.filter((value: unknown): value is number => typeof value === 'number' && isFinite(value)) 
-          : [];
-
-        if (numericData.length > 0) {
-          total = numericData.reduce((a: number, b: number) => a + b, 0);
+    const perUnitCosts = allCommunities
+      .map((community: Community) => {
+        if ((community.unit_count ?? 0) > 0) {
+          const communityAssets = forecastedAssets.filter(
+            (asset: ForecastedAsset) => asset.communities?.id === community.id || asset.communities?.name === community.name // Match by ID or name
+          );
+          const totalCommunityForecastCost = communityAssets.reduce(
+            (sum: number, asset: ForecastedAsset) => sum + asset.projected_cost,
+            0
+          );
+          const costPerUnit = calculatePerUnitCost(totalCommunityForecastCost, community.unit_count!);
+          return { name: community.name, costPerUnit }; // 'name' for Recharts YAxis dataKey
         }
-      }
-      
-      const text = `$${total.toLocaleString()}`;
-      const textX = Math.round((width - ctx.measureText(text).width) / 2);
-      const textY = height / 2;
+        return null;
+      })
+      .filter(item => item !== null && typeof item.costPerUnit === 'number' && item.costPerUnit > 0) as { name: string; costPerUnit: number }[];
+    
+    return perUnitCosts.sort((a, b) => b.costPerUnit - a.costPerUnit);
+  };
 
-      const titleText = "Overall Total";
-      const titleFontSize = (height / 200).toFixed(2);
-      ctx.font = `bold ${titleFontSize}em var(--font-inter), bold ${titleFontSize}em sans-serif`;
-      const titleX = Math.round((width - ctx.measureText(titleText).width) / 2);
-      const titleY = height / 2 - parseFloat(fontSize) * 16; 
+  // Placeholder for Recharts data transformation
+  // Example:
+  // const getRechartsBarData = () => {
+  //   return forecastedAssets.reduce((acc, asset) => {
+  //     const year = asset.replacement_year.toString();
+  //     const existingYear = acc.find(item => item.name === year);
+  //     if (existingYear) {
+  //       existingYear.cost += asset.projected_cost;
+  //     } else {
+  //       acc.push({ name: year, cost: asset.projected_cost });
+  //     }
+  //     return acc;
+  //   }, [] as { name: string; cost: number }[]).sort((a,b) => parseInt(a.name) - parseInt(b.name));
+  // };
 
-      const subtitleText = "Sum of Yearly Costs";
-      const subtitleFontSize = (height / 260).toFixed(2);
-      ctx.font = `${subtitleFontSize}em var(--font-inter), ${subtitleFontSize}em sans-serif`;
-      const subtitleX = Math.round((width - ctx.measureText(subtitleText).width) / 2);
-      const subtitleY = height / 2 + parseFloat(fontSize) * 13; 
-      
-      ctx.fillText(titleText, titleX, titleY);
-      ctx.fillText(text, textX, textY);
-      ctx.fillText(subtitleText, subtitleX, subtitleY);
-      ctx.restore(); 
-    }
-  }];
+  // const getRechartsPieData = () => {
+  //   const dataByCategory = forecastedAssets.reduce((acc, asset) => {
+  //     const categoryName = asset.categories?.name || 'Unknown';
+  //     acc[categoryName] = (acc[categoryName] || 0) + asset.projected_cost;
+  //     return acc;
+  //   }, {} as Record<string, number>);
+  //   return Object.entries(dataByCategory).map(([name, value]) => ({ name, value }));
+  // };
+  
+  // const getRechartsCostPerUnitData = () => {
+  //    if (forecastedAssets.length > 0 && allCommunities.length > 0) {
+  //     const perUnitCosts = allCommunities
+  //       .map((community: Community) => {
+  //         if ((community.unit_count ?? 0) > 0) {
+  //           const communityAssets = forecastedAssets.filter(
+  //             (asset: ForecastedAsset) => asset.communities?.id === community.id || asset.communities?.name === community.name
+  //           );
+  //           const totalCommunityForecastCost = communityAssets.reduce(
+  //             (sum: number, asset: ForecastedAsset) => sum + asset.projected_cost,
+  //             0
+  //           );
+  //           const costPerUnit = calculatePerUnitCost(totalCommunityForecastCost, community.unit_count!);
+  //           return { name: community.name, costPerUnit }; // 'name' for Recharts dataKey
+  //         }
+  //         return null;
+  //       })
+  //       .filter(item => item !== null) as { name: string; costPerUnit: number }[];
+  //     return perUnitCosts.sort((a, b) => b.costPerUnit - a.costPerUnit);
+  //   }
+  //   return [];
+  // };
 
-  const pieChartPlugins = [{
-    id: 'pieText',
-    beforeDraw(chart: ChartJS) { 
-      const {width, height, ctx} = chart;
-      ctx.save(); 
-      const fontSize = (height / 160).toFixed(2);
-      ctx.font = `var(--font-inter), ${fontSize}em sans-serif`;
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#000';
-
-      let total = 0;
-      if (chart.data.datasets.length > 0 && chart.data.datasets[0].data) {
-        const datasetData = chart.data.datasets[0].data;
-        const numericData = Array.isArray(datasetData) 
-          ? datasetData.filter((value: unknown): value is number => typeof value === 'number' && isFinite(value)) 
-          : [];
-
-        if (numericData.length > 0) {
-          total = numericData.reduce((a: number, b: number) => a + b, 0);
-        }
-      }
-      
-      const text = `$${total.toLocaleString()}`;
-      const textX = Math.round((width - ctx.measureText(text).width) / 2);
-      const textY = height / 2;
-
-      const titleText = "Total Net Worth"; 
-      const titleFontSize = (height / 200).toFixed(2);
-      ctx.font = `bold ${titleFontSize}em var(--font-inter), bold ${titleFontSize}em sans-serif`;
-      const titleX = Math.round((width - ctx.measureText(titleText).width) / 2);
-      const titleY = height / 2 - parseFloat(fontSize) * 16; 
-
-      const subtitleText = "Accumulated Net Worth"; 
-      const subtitleFontSize = (height / 260).toFixed(2);
-      ctx.font = `${subtitleFontSize}em var(--font-inter), ${subtitleFontSize}em sans-serif`;
-      const subtitleX = Math.round((width - ctx.measureText(subtitleText).width) / 2);
-      const subtitleY = height / 2 + parseFloat(fontSize) * 13; 
-      
-      ctx.fillText(titleText, titleX, titleY);
-      ctx.fillText(text, textX, textY);
-      ctx.fillText(subtitleText, subtitleX, subtitleY);
-      ctx.restore(); 
-    }
-  }];
+  const rechartsForecastByYearData = getRechartsForecastByYearData();
+  const rechartsPieData = getRechartsPieData();
+  const rechartsCostPerUnitData = getRechartsCostPerUnitData();
 
   return (
     <div className="p-4">
@@ -610,14 +499,14 @@ const DashboardPage: React.FC = () => {
               {isYebBelowTarget && (
                 <li className="text-sm text-yellow-600">
                   Projected Year-End Reserve Balance (
-                  <span className="font-semibold">${forecastAnalysisDetails.finalReserveBalance.toLocaleString()}</span>
+                  <span className="font-semibold">${forecastAnalysisDetails?.finalReserveBalance.toLocaleString()}</span>
                   ) may fall below the target.
                 </li>
               )}
               {isUnderfunded && (
                 <li className="text-sm text-yellow-600">
-                  Annual deposits (Total: <span className="font-semibold">${forecastAnalysisDetails.totalDepositsInForecastPeriod.toLocaleString()}</span>)
-                  may be insufficient to match future expenses (Total: <span className="font-semibold">${forecastAnalysisDetails.totalExpensesInForecastPeriod.toLocaleString()}</span>)
+                  Annual deposits (Total: <span className="font-semibold">${forecastAnalysisDetails?.totalDepositsInForecastPeriod.toLocaleString()}</span>)
+                  may be insufficient to match future expenses (Total: <span className="font-semibold">${forecastAnalysisDetails?.totalExpensesInForecastPeriod.toLocaleString()}</span>)
                   over the forecast period.
                 </li>
               )}
@@ -651,8 +540,7 @@ const DashboardPage: React.FC = () => {
                 <button
                   key={year}
                   onClick={() => setForecastRange(year)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                    ${forecastRange === year ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
+                  className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${forecastRange === year ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                 >
                   {year} Year{year > 1 ? 's' : ''}
                 </button>
@@ -733,57 +621,85 @@ const DashboardPage: React.FC = () => {
 
       {!loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="p-6 border rounded-xl shadow-lg">
-            <h2 className="text-lg font-semibold text-gray-800">Forecasted Costs by Year</h2>
-            <Doughnut 
-              data={barChartData} 
-              options={{ 
-                responsive: true, 
-                cutout: '70%', 
-                plugins: { 
-                  legend: { display: true, position: 'top' as const }, 
-                  title: { display: false }, 
-                  tooltip: { enabled: true } 
-                } 
-              }} 
-              plugins={doughnutChartPlugins} 
-            />
+          {/* Forecasted Costs by Year - Bar Chart */}
+          <div className="p-6 border rounded-xl shadow-lg bg-white">
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">Forecasted Costs by Year</h2>
+            {rechartsForecastByYearData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={rechartsForecastByYearData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tickFormatter={(value) => `$${value.toLocaleString()}`} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, "Total Cost"]} />
+                  <Legend wrapperStyle={{ fontSize: "14px" }} />
+                  <Bar dataKey="totalCost" name="Total Cost" fill={RECHARTS_COLORS[0]}>
+                    {rechartsForecastByYearData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={RECHARTS_COLORS[index % RECHARTS_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-gray-500">No data available for this chart.</p>
+            )}
           </div>
-          <div className="p-6 border rounded-xl shadow-lg">
-            <h2 className="text-lg font-semibold text-gray-800">Cost by Category</h2>
-            <Pie 
-              data={pieChartData} 
-              options={{ 
-                responsive: true, 
-                plugins: { 
-                  legend: { display: true, position: 'top' as const }, 
-                  title: { display: false }, 
-                  tooltip: { enabled: true } 
-                } 
-              }}
-              plugins={pieChartPlugins} 
-            />
+
+          {/* Cost by Category - Pie Chart */}
+          <div className="p-6 border rounded-xl shadow-lg bg-white">
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost by Category</h2>
+            {rechartsPieData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <RechartsPie
+                    data={rechartsPieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {rechartsPieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={RECHARTS_COLORS[index % RECHARTS_COLORS.length]} />
+                    ))}
+                  </RechartsPie>
+                  <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, "Cost"]} />
+                  <Legend wrapperStyle={{ fontSize: "14px" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-gray-500">No data available for this chart.</p>
+            )}
           </div>
-          {costPerUnitChartData.labels && costPerUnitChartData.labels.length > 0 && (
-            <div className="p-6 border rounded-xl shadow-lg lg:col-span-2">
-              <h2 className="text-lg font-semibold text-gray-800">Cost Per Unit by Community</h2>
-              <Bar 
-                data={costPerUnitChartData} 
-                options={{ 
-                  responsive: true, 
-                  indexAxis: 'y' as const, 
-                  plugins: { 
-                    legend: { display: false }, 
-                    title: { display: true, text: 'Cost Per Unit by Community' } 
-                  }, 
-                  scales: { 
-                    x: { beginAtZero: true, grid: { display: false } }, 
-                    y: { grid: { display: true } } 
-                  } 
-                }} 
-              />
-            </div>
-          )}
+
+          {/* Cost Per Unit by Community - Horizontal Bar Chart */}
+          <div className="p-6 border rounded-xl shadow-lg bg-white lg:col-span-2">
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost Per Unit by Community</h2>
+            {rechartsCostPerUnitData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300 + rechartsCostPerUnitData.length * 20}>
+                {/* Ensure BarChart is the single direct child */}
+                <BarChart
+                  data={rechartsCostPerUnitData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis type="number" tickFormatter={(value) => `$${value.toLocaleString()}`} tick={{ fontSize: 12 }} />
+                  <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, "Cost Per Unit"]} />
+                  <Legend wrapperStyle={{ fontSize: "14px" }} />
+                  <Bar dataKey="costPerUnit" name="Cost Per Unit" fill={RECHARTS_COLORS[2]}>
+                    {rechartsCostPerUnitData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={RECHARTS_COLORS[index % RECHARTS_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-gray-500">No data available for this chart.</p>
+            )}
+          </div>
         </div>
       )}
       {!loading && !error && forecastedAssets.length === 0 && (selectedCategory || selectedCommunities.length > 0) && (
