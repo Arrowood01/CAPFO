@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Doughnut, Pie, Bar } from 'react-chartjs-2';
+import { Doughnut, Bar } from 'react-chartjs-2'; // Removed Pie
 import StatCard from '@/components/StatCard';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import Papa from 'papaparse';
-import { ShieldAlert, Landmark, TrendingUp, DollarSign, ListChecks, CalendarDays, FileText, MoreVertical } from 'lucide-react';
+// Removed CalendarDays, FileText, MoreVertical as they are not used in the new design for now
+import { ShieldAlert, Landmark, TrendingUp, DollarSign, ListChecks } from 'lucide-react';
 import {
   generateForecast,
   calculatePerUnitCost,
@@ -88,10 +89,13 @@ interface ChartJsData {
 }
 
 const DashboardPage: React.FC = () => {
-  const [forecastRange, setForecastRange] = useState<number>(5);
-  const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  // const [selectedStatus, setSelectedStatus] = useState<string | null>(null); // Keep if status filter is used
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [forecastRange, _setForecastRange] = useState<number>(5); // Kept for now, as it's used in runForecast logic
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [selectedCommunities, _setSelectedCommunities] = useState<string[]>([]); // Kept for now
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [selectedCategory, _setSelectedCategory] = useState<string | null>(null); // Kept for now
+  // const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -110,10 +114,13 @@ const DashboardPage: React.FC = () => {
   // const [isUnderfunded, setIsUnderfunded] = useState<boolean>(false); // Can be derived
   // const [suggestedMonthlyDepositPerUnit, setSuggestedMonthlyDepositPerUnit] = useState<number>(0); // Can be derived
 
-  const [activeInflationRate, setActiveInflationRate] = useState<number>(globalInflationRate);
-  const [activeInvestmentRate, setActiveInvestmentRate] = useState<number>(defaultGlobalInvestmentRate);
-  const [activeForecastYears, setActiveForecastYears] = useState<number>(forecastRange);
-  const [activeAnnualDeposit, setActiveAnnualDeposit] = useState<number>(defaultGlobalAnnualDeposit);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_activeInflationRate, setActiveInflationRate] = useState<number>(globalInflationRate);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_activeInvestmentRate, setActiveInvestmentRate] = useState<number>(defaultGlobalInvestmentRate);
+  const [activeForecastYears, setActiveForecastYears] = useState<number>(forecastRange); // Still used in StatCard title
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_activeAnnualDeposit, setActiveAnnualDeposit] = useState<number>(defaultGlobalAnnualDeposit);
   const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
 
 
@@ -198,7 +205,7 @@ const DashboardPage: React.FC = () => {
       }
       
       const validAssetsData = Array.isArray(supabaseAssetsData)
-        ? supabaseAssetsData.filter((item: any) => item && !item.error && item.id)
+        ? supabaseAssetsData.filter((item: Record<string, any> & { id?: string; error?: unknown }) => item && !item.error && item.id)
         : [];
       
       const assetsData = validAssetsData as unknown as DashboardAsset[];
@@ -226,7 +233,8 @@ const DashboardPage: React.FC = () => {
       const yearsToForecast = effectiveCommunitySettings?.forecast_years ?? forecastRange; // Use consistent variable name
       const annualDep = effectiveCommunitySettings?.annual_deposit ?? defaultGlobalAnnualDeposit;
       const initialReserve = effectiveCommunitySettings?.initial_reserve_balance ?? 0;
-      const targetYEB = effectiveCommunitySettings?.target_reserve_balance ?? 0;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _targetYEB = effectiveCommunitySettings?.target_reserve_balance ?? 0; // Kept for potential future use in health checks
 
       setActiveInflationRate(inflation);
       setActiveInvestmentRate(investmentRate);
@@ -274,7 +282,7 @@ const DashboardPage: React.FC = () => {
     }
   }, [
     forecastRange, selectedCommunities, selectedCategory, globalInflationRate,
-    allCommunitySettings, defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit, supabase
+    allCommunitySettings, defaultGlobalInvestmentRate, defaultGlobalAnnualDeposit // Removed supabase
   ]);
 
   useEffect(() => {
@@ -282,10 +290,9 @@ const DashboardPage: React.FC = () => {
   }, [runForecast]);
 
 
-  const handleRefreshForecast = useCallback(() => {
-    // Re-fetch initial data then run forecast
-    fetchData().then(() => runForecast());
-  }, [fetchData, runForecast]);
+  // const handleRefreshForecast = useCallback(() => { // Commented out as the button was removed
+  //   fetchData().then(() => runForecast());
+  // }, [fetchData, runForecast]);
 
 
   const handleExportToCSV = () => {
@@ -432,7 +439,7 @@ const DashboardPage: React.FC = () => {
                     },
                     scales: {
                       x: { grid: { display: false }, ticks: { font: {size: 10}, color: '#6b7280' } },
-                      y: { beginAtZero: true, grid: { display: true, color: '#E2E8F0' }, ticks: { font: {size: 10}, color: '#6b7280', callback: value => `$${value}` } }
+                      y: { beginAtZero: true, grid: { display: true, color: '#E2E8F0' }, ticks: { font: {size: 10}, color: '#6b7280', callback: (value: string | number) => `$${value}` } }
                     }
                   }}
                 />

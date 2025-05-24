@@ -6,7 +6,7 @@
 @import "@fontsource/inter/700.css";
 
 body {
-  @apply bg-contentBg text-defaultText font-sans antialiased;
+  @apply font-sans antialiased; /* bg-contentBg and text-defaultText are applied in layout.tsx */
 }
 
 /* Ensure input fields have black text (keeping this for now, can be reviewed) */
