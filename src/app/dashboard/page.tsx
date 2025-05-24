@@ -44,6 +44,20 @@ interface DashboardAsset {
   communities?: { id: string; name: string };
 }
 
+// Interface for the raw data structure from Supabase query
+interface SupabaseAssetRow {
+  id: string;
+  unit_number: string | null;
+  install_date: string | null;
+  description: string | null;
+  purchase_price: number | null;
+  // Assuming Supabase returns an array for joined tables, even if empty or with one item.
+  // If a join results in no related rows, Supabase typically returns an empty array [] for that field, not null.
+  categories: Array<{ id: string; name: string; lifespan: number | null; avg_replacement_cost: number | null }>;
+  communities: Array<{ id: string; name: string }>;
+  error?: unknown;
+}
+
 interface ForecastedAsset extends DashboardAsset {
   replacement_year: number;
   projected_cost: number;
@@ -73,6 +87,7 @@ interface BarDataset {
   barThickness?: number;
   borderRadius?: number; // For rounded bars, often configured in options.elements.bar but can be dataset-specific in some setups
   // Add other bar-specific properties if needed
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // Keep flexible for other less common props
 }
 
@@ -84,6 +99,7 @@ interface ChartJsData {
     backgroundColor?: string | string[];
     borderColor?: string | string[];
     borderWidth?: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   }>;
 }
@@ -205,22 +221,27 @@ const DashboardPage: React.FC = () => {
       }
       
       const validAssetsData = Array.isArray(supabaseAssetsData)
-        ? supabaseAssetsData.filter((item: Record<string, any> & { id?: string; error?: unknown }) => item && !item.error && item.id)
+        ? supabaseAssetsData.filter((item): item is SupabaseAssetRow & { id: string } => {
+            const assetItem = item as SupabaseAssetRow; // Explicit cast
+            return !!(assetItem && assetItem.id && !assetItem.error);
+          })
         : [];
       
-      const assetsData = validAssetsData as unknown as DashboardAsset[];
+      // assetsData should be of type SupabaseAssetRow[] as it comes from validAssetsData
+      const assetsData: SupabaseAssetRow[] = validAssetsData;
  
-      const assetsForForecast: ForecastingAsset[] = assetsData.map(asset => ({
+      const assetsForForecast: ForecastingAsset[] = assetsData.map((asset: SupabaseAssetRow) => ({ // asset is SupabaseAssetRow
         id: asset.id,
         name: asset.description || 'N/A',
         install_date: asset.install_date || new Date().toISOString(),
         purchase_price: asset.purchase_price || 0,
         category: {
-          name: asset.categories?.name || 'Unknown Category',
-          lifespan: asset.categories?.lifespan ?? 10,
-          avg_replacement_cost: asset.categories?.avg_replacement_cost ?? 0,
+          name: asset.categories?.[0]?.name || 'Unknown Category',
+          lifespan: asset.categories?.[0]?.lifespan ?? 10,
+          avg_replacement_cost: asset.categories?.[0]?.avg_replacement_cost ?? 0,
         },
-        community: asset.communities?.name || 'Unknown Community',
+        // ForecastingAsset expects community to be a string (name)
+        community: asset.communities?.[0]?.name || 'Unknown Community',
       }));
 
       let effectiveCommunitySettings: CommunitySpecificSettingsInDashboard | undefined = undefined;
@@ -253,20 +274,28 @@ const DashboardPage: React.FC = () => {
       setForecastAnalysisDetails(forecastResultData);
 
       const finalForecastedAssets: ForecastedAsset[] = forecastResultData.forecastedReplacements.map(fr => {
-        const originalAssetDetails = assetsData.find(a => a.id === fr.asset.id);
+        const originalAssetDetails = assetsData.find((a: SupabaseAssetRow) => a.id === fr.asset.id); // originalAssetDetails is SupabaseAssetRow
         const detailedAsset = forecastResultData.detailedAssets.find(da => da.id === fr.asset.id);
         return {
           id: fr.asset.id,
-          unit_number: originalAssetDetails?.unit_number,
-          install_date: fr.asset.install_date,
+          unit_number: originalAssetDetails?.unit_number ?? undefined, // Convert null to undefined
+          install_date: originalAssetDetails?.install_date || fr.asset.install_date,
           description: fr.asset.name,
-          purchase_price: fr.asset.purchase_price,
-          categories: originalAssetDetails?.categories,
-          communities: originalAssetDetails?.communities,
+          purchase_price: originalAssetDetails?.purchase_price || fr.asset.purchase_price,
+          categories: originalAssetDetails?.categories?.[0] ? {
+            id: originalAssetDetails.categories[0].id,
+            name: originalAssetDetails.categories[0].name,
+            lifespan: originalAssetDetails.categories[0].lifespan,
+            avg_replacement_cost: originalAssetDetails.categories[0].avg_replacement_cost,
+          } : undefined,
+          communities: originalAssetDetails?.communities?.[0] ? {
+            id: originalAssetDetails.communities[0].id,
+            name: originalAssetDetails.communities[0].name,
+          } : undefined,
           replacement_year: fr.year,
           projected_cost: fr.cost,
           isOverdue: detailedAsset?.isOverdue,
-          lifespan: originalAssetDetails?.categories?.lifespan,
+          lifespan: originalAssetDetails?.categories?.[0]?.lifespan, // Access [0] for lifespan
         };
       });
       setForecastedAssets(finalForecastedAssets);
