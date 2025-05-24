@@ -1,28 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from 'next/font/google'; // Import Inter from next/font/google
+import { Inter } from 'next/font/google';
+import Link from 'next/link';
+import { HomeIcon } from 'lucide-react'; // Assuming other icons like Briefcase, BarChart, Settings might be used
 // import { Geist, Geist_Mono } from "next/font/google"; // Geist can be added back if needed
 import "./globals.css";
-// import Navigation from "@/components/Navigation"; // Navigation component removed
-import AuthGuard from "@/components/AuthGuard"; // Restore AuthGuard
+import AuthGuard from "@/components/AuthGuard";
 
 const inter = Inter({
   subsets: ['latin'],
-  // variable: '--font-inter', // No longer using CSS variable directly for Tailwind, using className
 });
 
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
-
 export const metadata: Metadata = {
-  title: "Capital Forecasting Tool", // Updated title
-  description: "SaaS application for capital forecasting", // Updated description
+  title: "Capital Forecasting Tool",
+  description: "SaaS application for capital forecasting",
 };
 
 export default function RootLayout({
@@ -32,16 +22,28 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}> {/* Apply Inter className to body */}
-        <div className="flex h-screen bg-gray-100"> {/* Ensure bg-gray-100 is on the main flex container */}
+      <body className={`${inter.className} antialiased`}>
+        <div className="flex h-screen bg-gray-100">
           {/* Fixed Sidebar */}
-          <aside className="fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 space-y-6 shadow-lg z-10">
-            <h2 className="text-2xl font-semibold border-b border-gray-700 pb-4">Capital Forecaster</h2>
-            <nav className="space-y-3">
-              <a href="/dashboard" className="block py-2 px-3 rounded-md hover:bg-gray-800 hover:text-blue-300 transition-colors duration-150">Dashboard</a>
-              <a href="/portfolio" className="block py-2 px-3 rounded-md hover:bg-gray-800 hover:text-blue-300 transition-colors duration-150">Portfolio</a>
-              <a href="/reports" className="block py-2 px-3 rounded-md hover:bg-gray-800 hover:text-blue-300 transition-colors duration-150">Reports</a>
-              <a href="/settings" className="block py-2 px-3 rounded-md hover:bg-gray-800 hover:text-blue-300 transition-colors duration-150">Settings</a>
+          <aside className="w-64 bg-white h-screen border-r px-6 py-4 shadow-sm">
+            <h2 className="text-xl font-bold text-gray-700 mb-6">Capital Forecaster</h2>
+            <nav className="space-y-4">
+              <Link href="/dashboard" className="flex items-center gap-2 text-gray-600 hover:text-primary">
+                <HomeIcon className="h-5 w-5" />
+                Dashboard
+              </Link>
+              <Link href="/portfolio" className="flex items-center gap-2 text-gray-600 hover:text-primary">
+                {/* <BriefcaseIcon className="h-5 w-5" /> Placeholder */}
+                Portfolio
+              </Link>
+              <Link href="/reports" className="flex items-center gap-2 text-gray-600 hover:text-primary">
+                {/* <BarChartIcon className="h-5 w-5" /> Placeholder */}
+                Reports
+              </Link>
+              <Link href="/settings" className="flex items-center gap-2 text-gray-600 hover:text-primary">
+                {/* <SettingsIcon className="h-5 w-5" /> Placeholder */}
+                Settings
+              </Link>
             </nav>
           </aside>
 

@@ -746,8 +746,8 @@ const DashboardPage: React.FC = () => {
 
       {!loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"> {/* Consistent gap */}
-          <div className="bg-white p-6 shadow-xl rounded-xl border border-gray-300">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">Forecasted Costs by Year</h2>
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200"> {/* Reverted to previous card style as per plan, new one is for StatCard */}
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">Forecasted Costs by Year</h2> {/* Kept h2 style from feedback */}
             <Doughnut
               data={barChartData}
               options={{
@@ -762,8 +762,8 @@ const DashboardPage: React.FC = () => {
               plugins={doughnutChartPlugins}
             />
           </div>
-          <div className="bg-white p-6 shadow-xl rounded-xl border border-gray-300">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">Cost by Category</h2>
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200"> {/* Reverted to previous card style */}
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">Cost By Category</h2> {/* Kept h2 style, corrected "By" */}
             <Pie
               data={pieChartData}
               options={{
@@ -778,8 +778,8 @@ const DashboardPage: React.FC = () => {
             />
           </div>
           {costPerUnitChartData.labels && costPerUnitChartData.labels.length > 0 && (
-            <div className="bg-white p-6 shadow-xl rounded-xl border border-gray-300 lg:col-span-2">
-              <h2 className="text-lg font-semibold mb-4 text-gray-800">Cost Per Unit by Community</h2>
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 lg:col-span-2"> {/* Reverted to previous card style */}
+              <h2 className="text-lg font-semibold mb-4 text-gray-800">Cost Per Unit by Community</h2> {/* Kept h2 style */}
               <Bar
                 data={costPerUnitChartData}
                 options={{
@@ -809,9 +809,9 @@ const DashboardPage: React.FC = () => {
 
       {/* Table Section */}
       {!loading && forecastedAssets.length > 0 && (
-        <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200"> {/* This is the table's card container, already styled well */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">Forecasted Assets</h2>
+            <h2 className="text-lg font-semibold text-gray-800">Forecasted Assets</h2> {/* Updated h2 style */}
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -831,19 +831,19 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full bg-white text-sm border rounded overflow-hidden">
+              <thead className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit #</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Community</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lifespan (Yrs)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Replacement Year</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projected Cost</th>
+                  <th className="px-4 py-3">Unit #</th>
+                  <th className="px-4 py-3">Community</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3">Lifespan (Yrs)</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Replacement Year</th>
+                  <th className="px-4 py-3">Projected Cost</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="divide-y divide-gray-200">
                 {forecastedAssets
                   .filter(asset => {
                     if (!showAtRiskOnly) return true;
@@ -868,22 +868,26 @@ const DashboardPage: React.FC = () => {
                     }
 
                     const riskClass = lifeUsed >= 1 ? "bg-red-100" : lifeUsed >= 0.75 ? "bg-yellow-100" : "";
-                    const stripeClass = idx % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                    // The striping from feedback: className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
+                    // Combining with riskClass:
+                    const baseStripeClass = idx % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                    const finalRowClass = riskClass ? `${riskClass} hover:bg-opacity-75` : `${baseStripeClass} hover:bg-gray-50`;
+
 
                     return (
-                      <tr key={asset.id} className={`${riskClass} ${stripeClass}`.trim()}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.unit_number || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.communities?.name || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.categories?.name || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.lifespan ?? 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {lifeUsed >= 1 && <span className="text-xs text-red-700 bg-red-200 px-2 py-1 rounded-full">Overdue</span>}
-                          {lifeUsed >= 0.75 && lifeUsed < 1 && <span className="text-xs text-yellow-700 bg-yellow-200 px-2 py-1 rounded-full">Warning</span>}
-                          {lifeUsed < 0.75 && lifeUsed >= 0 && <span className="text-xs text-green-700 bg-green-200 px-2 py-1 rounded-full">OK</span>}
+                      <tr key={asset.id} className={finalRowClass}>
+                        <td className="px-4 py-2 whitespace-nowrap">{asset.unit_number || 'N/A'}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">{asset.communities?.name || 'N/A'}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">{asset.categories?.name || 'N/A'}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">{asset.lifespan ?? 'N/A'}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {lifeUsed >= 1 && <span className="inline-block text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">Overdue</span>}
+                          {lifeUsed >= 0.75 && lifeUsed < 1 && <span className="inline-block text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-600">Warning</span>}
+                          {lifeUsed < 0.75 && lifeUsed >= 0 && <span className="inline-block text-xs px-2 py-1 rounded-full bg-green-100 text-green-600">OK</span>}
                           {lifeUsed < 0 && <span className="text-xs text-gray-500">N/A</span>}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.replacement_year}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${asset.projected_cost.toFixed(2)}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">{asset.replacement_year}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">${asset.projected_cost.toFixed(2)}</td>
                       </tr>
                     );
                   })}

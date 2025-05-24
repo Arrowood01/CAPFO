@@ -1,52 +1,22 @@
-/* @import "@fontsource/inter/variable.css"; */ /* Removed as Inter font will be handled by next/font/google */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/*
-:root {
-  --font-geist-sans: "Geist Sans", sans-serif;
-  --font-geist-mono: "Geist Mono", monospace;
-  --background: #ffffff;
-  --foreground: #111827;
-  --primary-blue: #2563eb;
-  --primary-blue-hover: #1d4ed8;
-  --secondary-blue: #dbeafe;
-  --border-blue: #93c5fd;
-}
-*/
-
-/*
-  Removing the @theme inline block to simplify and rely on standard Tailwind behavior.
-  If specific theme variables are needed for JS access or complex theming,
-  they should be managed through Tailwind's theme configuration (tailwind.config.ts)
-  or CSS custom properties directly without the @theme directive.
-*/
-/*
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-mono: var(--font-mono);
-}
-*/
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/700.css";
 
 body {
-  @apply font-sans bg-white text-gray-900; /* Restore base Tailwind classes */
-  /* border: 10px solid lime !important; */ /* Remove diagnostic border test */
-  /* font-family: 'InterVariable', sans-serif; */ /* Let Tailwind handle this via font-sans from config */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  @apply bg-gray-100 text-gray-800 font-sans antialiased;
 }
 
-/* Ensure input fields have black text */
+/* Ensure input fields have black text (keeping this for now, can be reviewed) */
 input,
 select,
 textarea {
   color: #000000; /* Black text for input fields */
 }
 
-/* Style for select dropdown arrows to ensure visibility on white background if needed */
+/* Style for select dropdown arrows (keeping this for now, can be reviewed) */
 select {
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
