@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Doughnut, Pie, Bar } from 'react-chartjs-2';
+import StatCard from '@/components/StatCard'; // Import StatCard
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'; // Removed unused ChartOptions
 import Papa from 'papaparse';
 import {
@@ -605,8 +606,29 @@ const DashboardPage: React.FC = () => {
   }];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-      <h1 className="text-3xl font-bold mb-6">Capital Asset Forecast</h1>
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <h1 className="text-3xl font-bold">Capital Asset Forecast</h1>
+
+      {/* StatCard grid */}
+      {forecastAnalysisDetails && !loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StatCard
+            title="At-Risk Assets"
+            value={overdueAssetsCount}
+            color="red"
+          />
+          <StatCard
+            title="Reserve Balance"
+            value={`$${forecastAnalysisDetails.finalReserveBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+            color={forecastAnalysisDetails.finalReserveBalance < 0 ? "yellow" : "green"}
+          />
+          <StatCard
+            title="Forecasted Cost (Next ${activeForecastYears} Yrs)"
+            value={`$${forecastAnalysisDetails.totalExpensesInForecastPeriod.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+            color="green"
+          />
+        </div>
+      )}
 
       {/* Forecast Health Check Section */}
       {forecastAnalysisDetails && !loading && (
