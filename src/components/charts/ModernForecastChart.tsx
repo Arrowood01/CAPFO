@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 
 interface DataPoint {
   name: string;
@@ -15,10 +14,12 @@ interface ModernForecastChartProps {
 
 const ModernForecastChart: React.FC<ModernForecastChartProps> = ({ data, height = 300 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 0, height });
+  const [dimensions, setDimensions] = useState({ width: 800, height }); // Default width
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const updateDimensions = () => {
       if (svgRef.current) {
         const { width } = svgRef.current.getBoundingClientRect();
@@ -26,9 +27,19 @@ const ModernForecastChart: React.FC<ModernForecastChartProps> = ({ data, height 
       }
     };
 
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    // Initial measurement after a delay to prevent layout thrashing
+    timeoutId = setTimeout(updateDimensions, 100);
+    
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateDimensions, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
   }, [height]);
 
   if (!data || data.length === 0) {
@@ -60,8 +71,8 @@ const ModernForecastChart: React.FC<ModernForecastChartProps> = ({ data, height 
   const areaData = `${pathData} L ${innerWidth} ${innerHeight} L 0 ${innerHeight} Z`;
 
   return (
-    <div className="w-full">
-      <svg ref={svgRef} width="100%" height={height}>
+    <div className="w-full" style={{ height }}>
+      <svg ref={svgRef} width="100%" height={height} viewBox={`0 0 ${dimensions.width} ${height}`} preserveAspectRatio="xMidYMid meet">
         <defs>
           {/* Gradient for the area fill */}
           <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
@@ -159,18 +170,13 @@ const ModernForecastChart: React.FC<ModernForecastChartProps> = ({ data, height 
                   stroke="white"
                   strokeWidth="2"
                   style={{ 
-                    filter: isHovered ? 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' : 'none',
-                    transition: 'all 0.2s ease'
+                    filter: isHovered ? 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' : 'none'
                   }}
                 />
 
                 {/* Tooltip */}
                 {isHovered && (
-                  <motion.g
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                  >
+                  <g>
                     <rect
                       x={x - 40}
                       y={y - 50}
@@ -198,7 +204,7 @@ const ModernForecastChart: React.FC<ModernForecastChartProps> = ({ data, height 
                     >
                       ${(cost / 1000).toFixed(1)}k
                     </text>
-                  </motion.g>
+                  </g>
                 )}
 
                 {/* X-axis label */}

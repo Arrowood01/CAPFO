@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 
 interface CategoryData {
@@ -42,10 +41,8 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data, totalAssets
         const gradient = GRADIENT_COLORS[index % GRADIENT_COLORS.length];
         
         return (
-          <motion.div
+          <div
             key={category.name}
-            initial={false}
-            animate={{ opacity: 1, x: 0 }}
             className="group cursor-pointer"
           >
             <div className="flex items-center justify-between mb-2">
@@ -69,32 +66,16 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data, totalAssets
               </div>
               
               {/* Progress bar */}
-              <motion.div
+              <div
                 className={`absolute top-0 left-0 h-full bg-gradient-to-r ${gradient} rounded-full`}
-                initial={false}
-                animate={{ width: `${percentage}%` }}
-                transition={{ 
-                  duration: 0.5,
-                  ease: "easeOut" 
-                }}
+                style={{ width: `${percentage}%` }}
               >
-                {/* Shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                  initial={{ x: '-100%' }}
-                  animate={{ x: '200%' }}
-                  transition={{
-                    duration: 2,
-                    delay: 0.5 + index * 0.1,
-                    ease: "linear",
-                  }}
-                />
-              </motion.div>
+              </div>
               
               {/* Hover effect overlay */}
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-full" />
             </div>
-          </motion.div>
+          </div>
         );
       })}
     </div>

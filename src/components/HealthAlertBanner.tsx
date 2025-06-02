@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { AlertTriangle, TrendingDown, DollarSign } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface HealthAlertBannerProps {
   overdueAssetsCount: number;

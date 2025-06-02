@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, startTransition } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import Papa from 'papaparse';
 import HealthAlertBanner from '@/components/HealthAlertBanner';
@@ -10,8 +10,8 @@ import ModernForecastChart from '@/components/charts/ModernForecastChart';
 import CategoryBreakdown from '@/components/charts/CategoryBreakdown';
 import VisualSeparator from '@/components/VisualSeparator';
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie as RechartsPie, Cell
-} from 'recharts'; // Renamed Pie to RechartsPie, removed LabelList
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
+} from 'recharts';
 import {
   generateForecast,
   calculatePerUnitCost,
@@ -153,6 +153,7 @@ const DashboardPage: React.FC = () => {
     if (selectedCommunities.length === 0 && !selectedCategory) {
         return;
     }
+    // Batch state updates to prevent multiple re-renders
     setLoading(true);
     setError(null);
     try {
@@ -238,8 +239,6 @@ const DashboardPage: React.FC = () => {
         initialReserveBalance,
       });
 
-      setForecastAnalysisDetails(forecastResult);
-
       const finalForecastedAssets: ForecastedAsset[] = forecastResult.forecastedReplacements.map(fr => {
         const originalAssetDetails = assetsData.find((a: DashboardAsset) => a.id === fr.asset.id);
         const detailedAsset = forecastResult.detailedAssets.find(da => da.id === fr.asset.id);
@@ -257,28 +256,32 @@ const DashboardPage: React.FC = () => {
           lifespan: originalAssetDetails?.categories?.lifespan,
         };
       });
-      setForecastedAssets(finalForecastedAssets);
 
-      setOverdueAssetsCount(forecastResult.detailedAssets.filter(a => a.isOverdue).length);
-      setIsYebBelowTarget(forecastResult.finalReserveBalance < targetYEB);
-      setIsUnderfunded(forecastResult.totalDepositsInForecastPeriod < forecastResult.totalExpensesInForecastPeriod);
+      // Batch all state updates with startTransition to prevent blocking
+      startTransition(() => {
+        setForecastedAssets(finalForecastedAssets);
+        setForecastAnalysisDetails(forecastResult);
+        setOverdueAssetsCount(forecastResult.detailedAssets.filter(a => a.isOverdue).length);
+        setIsYebBelowTarget(forecastResult.finalReserveBalance < targetYEB);
+        setIsUnderfunded(forecastResult.totalDepositsInForecastPeriod < forecastResult.totalExpensesInForecastPeriod);
 
-      let totalUnitsInSelection = 0;
-      if (selectedCommunities.length > 0) {
-        totalUnitsInSelection = selectedCommunities.reduce((acc, communityId) => {
-          const community = allCommunities.find(c => c.id === communityId);
-          return acc + (community?.unit_count || 0);
-        }, 0);
-      } else {
-        totalUnitsInSelection = allCommunities.reduce((acc, community) => acc + (community.unit_count || 0), 0);
-      }
+        let totalUnitsInSelection = 0;
+        if (selectedCommunities.length > 0) {
+          totalUnitsInSelection = selectedCommunities.reduce((acc, communityId) => {
+            const community = allCommunities.find(c => c.id === communityId);
+            return acc + (community?.unit_count || 0);
+          }, 0);
+        } else {
+          totalUnitsInSelection = allCommunities.reduce((acc, community) => acc + (community.unit_count || 0), 0);
+        }
 
-      if (forecastResult.totalExpensesInForecastPeriod > 0 && activeForecastYears > 0 && totalUnitsInSelection > 0) {
-        const suggestedDeposit = (forecastResult.totalExpensesInForecastPeriod / activeForecastYears / totalUnitsInSelection / 12);
-        setSuggestedMonthlyDepositPerUnit(suggestedDeposit);
-      } else {
-        setSuggestedMonthlyDepositPerUnit(0);
-      }
+        if (forecastResult.totalExpensesInForecastPeriod > 0 && activeForecastYears > 0 && totalUnitsInSelection > 0) {
+          const suggestedDeposit = (forecastResult.totalExpensesInForecastPeriod / activeForecastYears / totalUnitsInSelection / 12);
+          setSuggestedMonthlyDepositPerUnit(suggestedDeposit);
+        } else {
+          setSuggestedMonthlyDepositPerUnit(0);
+        }
+      });
 
     } catch (err) {
       console.error("Error running forecast:", err);
@@ -653,8 +656,7 @@ const DashboardPage: React.FC = () => {
       )}
       {error && <p className="text-red-600 glass border border-red-200 p-4 rounded-xl mb-4">{error}</p>}
 
-      {!initialLoading && !loading && !error && forecastedAssets.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 ${(!initialLoading && !loading && !error && forecastedAssets.length > 0) ? '' : 'hidden'}`}>
           {/* Forecasted Costs by Year - Modern Chart */}
           <div className="glass rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Forecasted Costs by Year</h2>
@@ -702,7 +704,7 @@ const DashboardPage: React.FC = () => {
             )}
           </div>
         </div>
-      )}
+      
       {!initialLoading && !loading && !error && forecastedAssets.length === 0 && (selectedCategory || selectedCommunities.length > 0) && (
          <p className="text-center text-gray-600 my-8">No assets found for the selected criteria. Try adjusting your filters.</p>
       )}
@@ -718,8 +720,7 @@ const DashboardPage: React.FC = () => {
 
 
       {/* Table Section */}
-      {!initialLoading && !loading && forecastedAssets.length > 0 && (
-        <div className="glass rounded-xl shadow-lg p-6">
+      <div className={`glass rounded-xl shadow-lg p-6 ${(!initialLoading && !loading && forecastedAssets.length > 0) ? '' : 'hidden'}`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-700">Forecasted Assets</h2>
             <div className="flex items-center gap-4">
@@ -819,7 +820,6 @@ const DashboardPage: React.FC = () => {
             </table>
           </div>
         </div>
-      )}
       </div>
     </div>
   );

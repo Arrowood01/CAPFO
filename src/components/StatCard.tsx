@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { ArrowUpRight, ArrowDownRight, LucideIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface StatCardProps {
   title: string;
@@ -25,11 +24,7 @@ const StatCard: React.FC<StatCardProps> = ({
   delay = 0,
 }) => {
   return (
-    <motion.div
-      initial={delay > 0 ? { opacity: 0, y: 20 } : false}
-      animate={delay > 0 ? { opacity: 1, y: 0 } : false}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -4 }}
+    <div
       className="group relative overflow-hidden"
     >
       <div className="glass rounded-xl p-4 hover:shadow-lg transition-all duration-300">
@@ -60,7 +55,7 @@ const StatCard: React.FC<StatCardProps> = ({
         {/* Subtle gradient overlay on hover */}
         <div className={`absolute inset-0 bg-gradient-to-r ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-xl`} />
       </div>
-    </motion.div>
+    </div>
   );
 };
 
