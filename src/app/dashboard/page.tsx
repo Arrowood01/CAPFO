@@ -75,6 +75,7 @@ const DashboardPage: React.FC = () => {
 
   const [forecastedAssets, setForecastedAssets] = useState<ForecastedAsset[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const [forecastAnalysisDetails, setForecastAnalysisDetails] = useState<ForecastResult | null>(null);
@@ -91,7 +92,7 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      setInitialLoading(true);
       try {
         const { data: communitiesData, error: communitiesError } = await supabase
           .from('communities')
@@ -141,7 +142,7 @@ const DashboardPage: React.FC = () => {
         console.error("Error fetching initial data:", err);
         setError('Failed to load initial filter data.');
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     };
     fetchData();
@@ -503,7 +504,7 @@ const DashboardPage: React.FC = () => {
         </header>
 
       {/* Health Alert Banner */}
-      {forecastAnalysisDetails && !loading && (
+      {!initialLoading && forecastAnalysisDetails && (
         <HealthAlertBanner
           overdueAssetsCount={overdueAssetsCount}
           isYebBelowTarget={isYebBelowTarget}
@@ -515,13 +516,13 @@ const DashboardPage: React.FC = () => {
         />
       )}
 
-      {/* Visual Separator */}
-      <div className="flex justify-center my-6">
-        <VisualSeparator className="w-32" />
-      </div>
-
       {/* Stats Grid */}
-      {!loading && (
+      {!initialLoading && (
+        <>
+          {/* Visual Separator */}
+          <div className="flex justify-center my-6">
+            <VisualSeparator className="w-32" />
+          </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard
             title="Total Assets"
@@ -552,12 +553,13 @@ const DashboardPage: React.FC = () => {
             delay={0.3}
           />
         </div>
-      )}
 
-      {/* Visual Separator */}
-      <div className="flex justify-center my-6">
-        <VisualSeparator gradient="from-purple-500 to-pink-600" className="w-24" />
-      </div>
+        {/* Visual Separator */}
+        <div className="flex justify-center my-6">
+          <VisualSeparator gradient="from-purple-500 to-pink-600" className="w-24" />
+        </div>
+        </>
+      )}
 
       {/* Filters Section */}
       <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
@@ -640,7 +642,7 @@ const DashboardPage: React.FC = () => {
       </div>
 
 
-      {loading && (
+      {(loading || initialLoading) && (
         <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
           <div className="relative">
             <div className="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
@@ -651,7 +653,7 @@ const DashboardPage: React.FC = () => {
       )}
       {error && <p className="text-red-600 glass border border-red-200 p-4 rounded-xl mb-4 animate-slide-up">{error}</p>}
 
-      {!loading && !error && forecastedAssets.length > 0 && (
+      {!initialLoading && !loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Forecasted Costs by Year - Modern Chart */}
           <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
@@ -701,10 +703,10 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       )}
-      {!loading && !error && forecastedAssets.length === 0 && (selectedCategory || selectedCommunities.length > 0) && (
+      {!initialLoading && !loading && !error && forecastedAssets.length === 0 && (selectedCategory || selectedCommunities.length > 0) && (
          <p className="text-center text-gray-600 my-8">No assets found for the selected criteria. Try adjusting your filters.</p>
       )}
-       {!loading && !error && forecastedAssets.length === 0 && !selectedCategory && selectedCommunities.length === 0 && (
+       {!initialLoading && !error && forecastedAssets.length === 0 && !selectedCategory && selectedCommunities.length === 0 && (
          <div className="text-center py-20">
            <div className="glass rounded-xl shadow-lg p-8 max-w-md mx-auto animate-fade-in">
              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -716,7 +718,7 @@ const DashboardPage: React.FC = () => {
 
 
       {/* Table Section */}
-      {!loading && forecastedAssets.length > 0 && (
+      {!initialLoading && !loading && forecastedAssets.length > 0 && (
         <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.7s' }}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-700">Forecasted Assets</h2>
