@@ -532,28 +532,24 @@ const DashboardPage: React.FC = () => {
             value={forecastedAssets.length}
             icon={Package}
             gradient="from-blue-500 to-purple-600"
-            delay={0}
           />
           <StatCard
             title="Communities"
             value={allCommunities.length}
             icon={Building2}
             gradient="from-emerald-500 to-teal-600"
-            delay={0}
           />
           <StatCard
             title="Total Forecast Cost"
             value={`$${(forecastedAssets.reduce((sum, asset) => sum + asset.projected_cost, 0) / 1000).toFixed(1)}k`}
             icon={DollarSign}
             gradient="from-orange-500 to-red-600"
-            delay={0}
           />
           <StatCard
             title="Avg. Cost per Unit"
             value={`$${(forecastedAssets.reduce((sum, asset) => sum + asset.projected_cost, 0) / allCommunities.reduce((sum, c) => sum + (c.unit_count || 0), 0) / forecastRange).toFixed(0)}/yr`}
             icon={TrendingUp}
             gradient="from-purple-500 to-pink-600"
-            delay={0}
           />
         </div>
 

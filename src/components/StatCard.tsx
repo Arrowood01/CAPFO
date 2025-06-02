@@ -12,7 +12,6 @@ interface StatCardProps {
     isPositive: boolean;
   };
   gradient?: string;
-  delay?: number;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -21,7 +20,6 @@ const StatCard: React.FC<StatCardProps> = ({
   icon: Icon,
   trend,
   gradient = 'from-blue-500 to-purple-600',
-  delay = 0,
 }) => {
   return (
     <div
