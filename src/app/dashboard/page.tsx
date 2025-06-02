@@ -5,7 +5,10 @@ import { supabase } from '@/lib/supabaseClient';
 import Papa from 'papaparse';
 import HealthAlertBanner from '@/components/HealthAlertBanner';
 import StatCard from '@/components/StatCard';
-import { Building2, Package, TrendingUp, DollarSign } from 'lucide-react';
+import { Building2, Package, TrendingUp, DollarSign, Eye, EyeOff, Download } from 'lucide-react';
+import ModernForecastChart from '@/components/charts/ModernForecastChart';
+import CategoryBreakdown from '@/components/charts/CategoryBreakdown';
+import VisualSeparator from '@/components/VisualSeparator';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie as RechartsPie, Cell
 } from 'recharts'; // Renamed Pie to RechartsPie, removed LabelList
@@ -508,6 +511,11 @@ const DashboardPage: React.FC = () => {
         />
       )}
 
+      {/* Visual Separator */}
+      <div className="flex justify-center my-6">
+        <VisualSeparator className="w-32" />
+      </div>
+
       {/* Stats Grid */}
       {!loading && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -541,6 +549,11 @@ const DashboardPage: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Visual Separator */}
+      <div className="flex justify-center my-6">
+        <VisualSeparator gradient="from-purple-500 to-pink-600" className="w-24" />
+      </div>
 
       {/* Filters Section */}
       <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
@@ -624,78 +637,33 @@ const DashboardPage: React.FC = () => {
 
 
       {loading && (
-        <div className="flex justify-center items-center my-8">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
-          <p className="ml-4 text-lg">Loading forecast data...</p>
+        <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-transparent border-r-transparent border-b-transparent border-l-blue-500 rounded-full animate-spin"></div>
+          </div>
+          <p className="mt-4 text-lg text-gray-600 animate-pulse">Loading forecast data...</p>
         </div>
       )}
       {error && <p className="text-red-600 glass border border-red-200 p-4 rounded-xl mb-4 animate-slide-up">{error}</p>}
 
       {!loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Forecasted Costs by Year - Bar Chart */}
+          {/* Forecasted Costs by Year - Modern Chart */}
           <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Forecasted Costs by Year</h2>
-            {rechartsForecastByYearData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <RechartsPie
-                    data={rechartsForecastByYearData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70} // To make it a doughnut chart
-                    outerRadius={100}
-                    fill="#8884d8"
-                    paddingAngle={1}
-                    dataKey="totalCost" // This is the 'value' for each segment
-                    nameKey="name"      // This is the 'name' for each segment (year)
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {rechartsForecastByYearData.map((entry, index) => (
-                      <Cell key={`cell-fy-${index}`} fill={RECHARTS_COLORS[index % RECHARTS_COLORS.length]} />
-                    ))}
-                  </RechartsPie>
-                  <Tooltip formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
-                  <Legend wrapperStyle={{ fontSize: "14px" }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex-grow flex items-center justify-center">
-                <p className="text-center text-gray-500">No data available for this chart.</p>
-              </div>
-            )}
+            <ModernForecastChart data={rechartsForecastByYearData} />
           </div>
 
-          {/* Cost by Category - Pie Chart */}
+          {/* Cost by Category - Progress Bars */}
           <div className="glass rounded-xl shadow-lg p-6 min-h-[380px] flex flex-col animate-slide-up" style={{ animationDelay: '0.5s' }}>
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost by Category</h2>
-            {rechartsPieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <RechartsPie
-                    data={rechartsPieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {rechartsPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={RECHARTS_COLORS[index % RECHARTS_COLORS.length]} />
-                    ))}
-                  </RechartsPie>
-                  <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, "Cost"]} />
-                  <Legend wrapperStyle={{ fontSize: "14px" }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex-grow flex items-center justify-center">
-                <p className="text-center text-gray-500">No data available for this chart.</p>
-              </div>
-            )}
+            <div className="flex-1">
+              <CategoryBreakdown 
+                data={rechartsPieData} 
+                totalAssets={forecastedAssets.reduce((sum, asset) => sum + asset.projected_cost, 0)}
+              />
+            </div>
           </div>
 
           {/* Cost Per Unit by Community - Horizontal Bar Chart */}
@@ -743,20 +711,19 @@ const DashboardPage: React.FC = () => {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-700">Forecasted Assets</h2>
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={showAtRiskOnly}
-                  onChange={() => setShowAtRiskOnly(!showAtRiskOnly)}
-                  className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
-                />
-                Show At-Risk Only
-              </label>
+              <button
+                onClick={() => setShowAtRiskOnly(!showAtRiskOnly)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-200 ${showAtRiskOnly ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white' : 'glass hover:shadow-md'}`}
+              >
+                {showAtRiskOnly ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                <span className="text-sm font-medium">{showAtRiskOnly ? 'Showing At-Risk' : 'Show All'}</span>
+              </button>
               <button
                 onClick={handleExportToCSV}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50"
               >
-                Export to CSV
+                <Download className="w-4 h-4" />
+                <span>Export to CSV</span>
               </button>
             </div>
           </div>
@@ -773,7 +740,7 @@ const DashboardPage: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projected Cost</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200">
                 {forecastedAssets
                   .filter(asset => {
                     if (!showAtRiskOnly) return true;
@@ -797,19 +764,39 @@ const DashboardPage: React.FC = () => {
                       }
                     }
 
-                    const rowClass = lifeUsed >= 1 ? "bg-red-100" : lifeUsed >= 0.75 ? "bg-yellow-100" : "";
+                    const rowClass = lifeUsed >= 1 ? "bg-red-50/50" : lifeUsed >= 0.75 ? "bg-yellow-50/50" : "";
+                    const urgencyLevel = lifeUsed >= 1 ? 100 : lifeUsed >= 0.75 ? Math.round((lifeUsed - 0.75) * 400) : 0;
 
                     return (
-                      <tr key={asset.id} className={rowClass}>
+                      <tr key={asset.id} className={`${rowClass} hover:bg-blue-50/50 transition-colors duration-150`}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.unit_number || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.communities?.name || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.categories?.name || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.lifespan ?? 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {lifeUsed >= 1 && <span className="text-xs text-red-700 bg-red-200 px-2 py-1 rounded-full">Overdue</span>}
-                          {lifeUsed >= 0.75 && lifeUsed < 1 && <span className="text-xs text-yellow-700 bg-yellow-200 px-2 py-1 rounded-full">Warning</span>}
-                          {lifeUsed < 0.75 && lifeUsed >= 0 && <span className="text-xs text-green-700 bg-green-200 px-2 py-1 rounded-full">OK</span>}
-                          {lifeUsed < 0 && <span className="text-xs text-gray-500">N/A</span>}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            {lifeUsed >= 0 && (
+                              <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full transition-all duration-300 ${
+                                    lifeUsed >= 1 ? 'bg-gradient-to-r from-red-500 to-red-600' : 
+                                    lifeUsed >= 0.75 ? 'bg-gradient-to-r from-yellow-500 to-orange-600' : 
+                                    'bg-gradient-to-r from-green-500 to-emerald-600'
+                                  }`}
+                                  style={{ width: `${Math.min(lifeUsed * 100, 100)}%` }}
+                                />
+                              </div>
+                            )}
+                            <span className={`text-xs font-medium ${
+                              lifeUsed >= 1 ? 'text-red-700' : 
+                              lifeUsed >= 0.75 ? 'text-yellow-700' : 
+                              lifeUsed >= 0 ? 'text-green-700' : 'text-gray-500'
+                            }`}>
+                              {lifeUsed >= 1 ? 'Overdue' : 
+                               lifeUsed >= 0.75 ? `${urgencyLevel}% Risk` : 
+                               lifeUsed >= 0 ? 'Good' : 'N/A'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.replacement_year}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${asset.projected_cost.toFixed(2)}</td>
