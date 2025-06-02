@@ -148,8 +148,9 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const runForecast = useCallback(async () => {
-    if (!selectedCommunities.length && !selectedCategory && selectedCommunities.length === 0 && selectedCategory === null) {
-        // return;
+    // Don't run forecast if no filters are selected to prevent flickering
+    if (selectedCommunities.length === 0 && !selectedCategory) {
+        return;
     }
     setLoading(true);
     setError(null);
@@ -293,8 +294,11 @@ const DashboardPage: React.FC = () => {
   ]);
 
   useEffect(() => {
-    runForecast();
-  }, [runForecast]);
+    // Only run forecast if filters are selected
+    if (selectedCommunities.length > 0 || selectedCategory) {
+      runForecast();
+    }
+  }, [runForecast, selectedCommunities.length, selectedCategory]);
 
   const handleRefreshForecast = useCallback(async () => {
     setLoading(true);
@@ -701,7 +705,13 @@ const DashboardPage: React.FC = () => {
          <p className="text-center text-gray-600 my-8">No assets found for the selected criteria. Try adjusting your filters.</p>
       )}
        {!loading && !error && forecastedAssets.length === 0 && !selectedCategory && selectedCommunities.length === 0 && (
-         <p className="text-center text-gray-600 my-8">Please select filters to view the forecast.</p>
+         <div className="text-center py-20">
+           <div className="glass rounded-xl shadow-lg p-8 max-w-md mx-auto animate-fade-in">
+             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+             <h3 className="text-xl font-semibold text-gray-700 mb-2">Welcome to Capital Asset Forecast</h3>
+             <p className="text-gray-600">Please select a community or category from the filters above to view your asset forecast.</p>
+           </div>
+         </div>
       )}
 
 

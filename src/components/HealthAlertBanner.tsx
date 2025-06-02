@@ -73,7 +73,7 @@ const HealthAlertBanner: React.FC<HealthAlertBannerProps> = ({
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="glass bg-white/10 backdrop-blur-sm rounded-lg p-4"
+              className="bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-red-100">Overdue Assets</span>
@@ -89,7 +89,7 @@ const HealthAlertBanner: React.FC<HealthAlertBannerProps> = ({
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="glass bg-white/10 backdrop-blur-sm rounded-lg p-4"
+                className="bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10"
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-orange-100">Reserve Status</span>
@@ -106,7 +106,7 @@ const HealthAlertBanner: React.FC<HealthAlertBannerProps> = ({
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="glass bg-white/10 backdrop-blur-sm rounded-lg p-4"
+                className="bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10"
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-yellow-100">Funding Gap</span>
