@@ -36,7 +36,8 @@ type CommunitySettings = {
   investment_rate: number;
   inflation_rate: number;
   forecast_years: number;
-  target_yeb: number;
+  initial_reserve_balance: number;
+  target_reserve_balance: number;
   alert_threshold_percent: number;
 };
 
@@ -48,7 +49,8 @@ type CommunitySettingsFormState = {
   investment_rate?: string | number;
   inflation_rate?: string | number;
   forecast_years?: string | number;
-  target_yeb?: string | number;
+  initial_reserve_balance?: string | number;
+  target_reserve_balance?: string | number;
   alert_threshold_percent?: string | number;
 };
 // Type for managing form state for asset categories, allowing strings for number inputs
@@ -409,8 +411,11 @@ const SettingsPage = () => {
         return undefined;
       }
       // Add more specific validations if needed (e.g., non-negative)
-      if (num < 0 && !fieldName.toLowerCase().includes('rate') && fieldName !== 'Target YEB' && fieldName !== 'Annual Deposit') { // Allow negative for specific fields if necessary
-         // For example, target_yeb could potentially be negative if it's a deficit target
+      if (num < 0 && !fieldName.toLowerCase().includes('rate') && 
+          fieldName !== 'Initial Reserve Balance' && 
+          fieldName !== 'Target Reserve Balance' && 
+          fieldName !== 'Annual Deposit') { // Allow negative for specific fields if necessary
+         // For example, reserve balances could potentially be negative if it's a deficit
          // showToast(`${fieldName} must be non-negative.`, 'error');
          // return undefined;
       }
@@ -426,7 +431,8 @@ const SettingsPage = () => {
       { key: 'investment_rate', dbKey: 'investment_rate', name: 'Investment Rate (%)', isRate: true },
       { key: 'inflation_rate', dbKey: 'inflation_rate', name: 'Inflation Rate (%)', isRate: true },
       { key: 'forecast_years', dbKey: 'forecast_years', name: 'Forecast Years' },
-      { key: 'target_yeb', dbKey: 'target_yeb', name: 'Target YEB' },
+      { key: 'initial_reserve_balance', dbKey: 'initial_reserve_balance', name: 'Initial Reserve Balance' },
+      { key: 'target_reserve_balance', dbKey: 'target_reserve_balance', name: 'Target Reserve Balance' },
       { key: 'alert_threshold_percent', dbKey: 'alert_threshold_percent', name: 'Alert Threshold Percent (%)', isRate: true },
     ];
 
@@ -763,7 +769,7 @@ const SettingsPage = () => {
                 <details className="mt-2 p-3 bg-white border rounded-md">
                   <summary className="font-semibold text-gray-700 cursor-pointer">Forecast Settings</summary>
                   {/* Ensure allCommunitySettings[community.id] exists or provide defaults */}
-                  {['annual_deposit', 'monthly_per_unit', 'investment_rate', 'inflation_rate', 'forecast_years', 'target_yeb', 'alert_threshold_percent'].map((key) => (
+                  {['annual_deposit', 'monthly_per_unit', 'investment_rate', 'inflation_rate', 'forecast_years', 'initial_reserve_balance', 'target_reserve_balance', 'alert_threshold_percent'].map((key) => (
                     <div key={key} className="mt-2">
                       <label className="block text-sm font-medium text-gray-700 capitalize">{key.replace(/_/g, ' ')}</label>
                       <input
