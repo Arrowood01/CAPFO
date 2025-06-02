@@ -12,6 +12,8 @@
     "@supabase/supabase-js": "^2.49.4",
     "@types/papaparse": "^5.3.16",
     "chart.js": "^4.4.9",
+    "framer-motion": "^12.15.0",
+    "lucide-react": "^0.511.0",
     "next": "15.3.2",
     "papaparse": "^5.5.2",
     "react": "^19.0.0",

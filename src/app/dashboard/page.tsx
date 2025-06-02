@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import Papa from 'papaparse';
+import HealthAlertBanner from '@/components/HealthAlertBanner';
+import StatCard from '@/components/StatCard';
+import { Building2, Package, TrendingUp, DollarSign } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie as RechartsPie, Cell
 } from 'recharts'; // Renamed Pie to RechartsPie, removed LabelList
@@ -482,56 +485,65 @@ const DashboardPage: React.FC = () => {
   const rechartsCostPerUnitData = getRechartsCostPerUnitData();
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Capital Asset Forecast</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+      <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-8">
+        {/* Modern Header Section */}
+        <header className="animate-slide-up">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Capital Asset Forecast
+          </h1>
+          <p className="mt-2 text-gray-600">Comprehensive asset management and forecasting dashboard</p>
+        </header>
 
-      {/* Forecast Health Check Section */}
+      {/* Health Alert Banner */}
       {forecastAnalysisDetails && !loading && (
-        <div className="mb-6 p-6 border rounded-xl shadow-lg bg-white min-h-[100px]"> {/* Added min-height */}
-          <h2 className="text-xl font-semibold mb-3 text-gray-800">Forecast Health Check</h2>
-          {(overdueAssetsCount > 0 || isYebBelowTarget || isUnderfunded) ? (
-            <ul className="list-disc pl-5 space-y-1">
-              {overdueAssetsCount > 0 && (
-                <li className="text-sm text-red-600">
-                  <span className="font-semibold">{overdueAssetsCount}</span> asset(s) are beyond their expected lifespan.
-                </li>
-              )}
-              {isYebBelowTarget && (
-                <li className="text-sm text-yellow-600">
-                  Projected Year-End Reserve Balance (
-                  <span className="font-semibold">${forecastAnalysisDetails?.finalReserveBalance.toLocaleString()}</span>
-                  ) may fall below the target.
-                </li>
-              )}
-              {isUnderfunded && (
-                <li className="text-sm text-yellow-600">
-                  Annual deposits (Total: <span className="font-semibold">${forecastAnalysisDetails?.totalDepositsInForecastPeriod.toLocaleString()}</span>)
-                  may be insufficient to match future expenses (Total: <span className="font-semibold">${forecastAnalysisDetails?.totalExpensesInForecastPeriod.toLocaleString()}</span>)
-                  over the forecast period.
-                </li>
-              )}
-            </ul>
-          ) : (
-            <p className="text-sm text-green-600">Forecast health looks good based on current parameters!</p>
-          )}
-        </div>
+        <HealthAlertBanner
+          overdueAssetsCount={overdueAssetsCount}
+          isYebBelowTarget={isYebBelowTarget}
+          isUnderfunded={isUnderfunded}
+          finalReserveBalance={forecastAnalysisDetails.finalReserveBalance}
+          totalDeposits={forecastAnalysisDetails.totalDepositsInForecastPeriod}
+          totalExpenses={forecastAnalysisDetails.totalExpensesInForecastPeriod}
+          suggestedMonthlyDeposit={suggestedMonthlyDepositPerUnit}
+        />
       )}
 
-      {/* Suggested Monthly Deposit Section */}
-      {forecastAnalysisDetails && !loading && suggestedMonthlyDepositPerUnit > 0 && (
-        <div className="p-4 bg-white rounded-md shadow-md mt-6 mb-6 min-h-[80px]"> {/* Added min-height */}
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">Suggested Monthly Deposit</h2>
-          <p className="text-sm text-gray-600">
-            Based on your current forecast, we suggest a per-unit monthly deposit of:
-          </p>
-          <p className="text-2xl font-bold text-green-700 mt-2">
-            ${suggestedMonthlyDepositPerUnit.toFixed(2)} / unit
-          </p>
+      {/* Stats Grid */}
+      {!loading && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard
+            title="Total Assets"
+            value={forecastedAssets.length}
+            icon={Package}
+            gradient="from-blue-500 to-purple-600"
+            delay={0.15}
+          />
+          <StatCard
+            title="Communities"
+            value={allCommunities.length}
+            icon={Building2}
+            gradient="from-emerald-500 to-teal-600"
+            delay={0.2}
+          />
+          <StatCard
+            title="Total Forecast Cost"
+            value={`$${(forecastedAssets.reduce((sum, asset) => sum + asset.projected_cost, 0) / 1000).toFixed(1)}k`}
+            icon={DollarSign}
+            gradient="from-orange-500 to-red-600"
+            delay={0.25}
+          />
+          <StatCard
+            title="Avg. Cost per Unit"
+            value={`$${(forecastedAssets.reduce((sum, asset) => sum + asset.projected_cost, 0) / allCommunities.reduce((sum, c) => sum + (c.unit_count || 0), 0) / forecastRange).toFixed(0)}/yr`}
+            icon={TrendingUp}
+            gradient="from-purple-500 to-pink-600"
+            delay={0.3}
+          />
         </div>
       )}
 
       {/* Filters Section */}
-      <div className="mb-6 p-6 border rounded-xl shadow-lg">
+      <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Forecast Range</label>
@@ -540,7 +552,7 @@ const DashboardPage: React.FC = () => {
                 <button
                   key={year}
                   onClick={() => setForecastRange(year)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${forecastRange === year ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${forecastRange === year ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md transform scale-105' : 'glass hover:shadow-md hover:transform hover:scale-105'}`}
                 >
                   {year} Year{year > 1 ? 's' : ''}
                 </button>
@@ -549,13 +561,13 @@ const DashboardPage: React.FC = () => {
           </div>
 
 {/* Active Settings Display */}
-        <div className="p-4 bg-slate-800 rounded-xl shadow-lg mb-6 border border-indigo-700">
-          <p className="text-md font-semibold text-indigo-300 mb-2">Active Forecast Settings:</p>
-          <ul className="text-sm text-gray-300 list-disc pl-5 space-y-1">
-            <li>Inflation Rate: <span className="font-medium text-indigo-400">{(activeInflationRate * 100).toFixed(2)}%</span></li>
-            <li>Investment Rate: <span className="font-medium text-indigo-400">{(activeInvestmentRate * 100).toFixed(2)}%</span></li>
-            <li>Forecast Range: <span className="font-medium text-indigo-400">{activeForecastYears} years</span></li>
-            <li>Annual Deposit: <span className="font-medium text-indigo-400">${activeAnnualDeposit.toLocaleString()}</span></li>
+        <div className="glass-dark rounded-xl shadow-lg p-4 mb-6 border border-blue-200/20">
+          <p className="text-md font-semibold text-blue-600 mb-2">Active Forecast Settings:</p>
+          <ul className="text-sm text-gray-600 list-disc pl-5 space-y-1">
+            <li>Inflation Rate: <span className="font-medium text-blue-700">{(activeInflationRate * 100).toFixed(2)}%</span></li>
+            <li>Investment Rate: <span className="font-medium text-blue-700">{(activeInvestmentRate * 100).toFixed(2)}%</span></li>
+            <li>Forecast Range: <span className="font-medium text-blue-700">{activeForecastYears} years</span></li>
+            <li>Annual Deposit: <span className="font-medium text-blue-700">${activeAnnualDeposit.toLocaleString()}</span></li>
           </ul>
         </div>
         <div>
@@ -565,7 +577,7 @@ const DashboardPage: React.FC = () => {
             multiple
             value={selectedCommunities}
             onChange={(e) => setSelectedCommunities(Array.from(e.target.selectedOptions, option => option.value))}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-24"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base glass border-gray-300/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md h-24"
           >
             {allCommunities.map(comm => <option key={comm.id} value={comm.id}>{comm.name}</option>)}
           </select>
@@ -599,10 +611,10 @@ const DashboardPage: React.FC = () => {
           </select>
         </div>
       </div>
-      <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-end">
           <button
             onClick={handleRefreshForecast}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-300"
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? 'Refreshing...' : 'Refresh Forecast'}
@@ -617,12 +629,12 @@ const DashboardPage: React.FC = () => {
           <p className="ml-4 text-lg">Loading forecast data...</p>
         </div>
       )}
-      {error && <p className="text-red-500 bg-red-100 p-3 rounded mb-4">{error}</p>}
+      {error && <p className="text-red-600 glass border border-red-200 p-4 rounded-xl mb-4 animate-slide-up">{error}</p>}
 
       {!loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Forecasted Costs by Year - Bar Chart */}
-          <div className="p-6 border rounded-xl shadow-lg bg-white">
+          <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Forecasted Costs by Year</h2>
             {rechartsForecastByYearData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -656,7 +668,7 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* Cost by Category - Pie Chart */}
-          <div className="p-6 border rounded-xl shadow-lg bg-white min-h-[380px] flex flex-col"> {/* Added min-height and flex */}
+          <div className="glass rounded-xl shadow-lg p-6 min-h-[380px] flex flex-col animate-slide-up" style={{ animationDelay: '0.5s' }}>
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost by Category</h2>
             {rechartsPieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -687,7 +699,7 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* Cost Per Unit by Community - Horizontal Bar Chart */}
-          <div className="p-6 border rounded-xl shadow-lg bg-white lg:col-span-2 min-h-[380px] flex flex-col"> {/* Added min-height and flex */}
+          <div className="glass rounded-xl shadow-lg p-6 lg:col-span-2 min-h-[380px] flex flex-col animate-slide-up" style={{ animationDelay: '0.6s' }}>
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost Per Unit by Community</h2>
             {rechartsCostPerUnitData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300 + rechartsCostPerUnitData.length * 20}>
@@ -727,9 +739,9 @@ const DashboardPage: React.FC = () => {
 
       {/* Table Section */}
       {!loading && forecastedAssets.length > 0 && (
-        <div className="p-4 border rounded shadow-sm">
+        <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.7s' }}>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Forecasted Assets</h2>
+            <h2 className="text-xl font-semibold text-gray-700">Forecasted Assets</h2>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -742,7 +754,7 @@ const DashboardPage: React.FC = () => {
               </label>
               <button
                 onClick={handleExportToCSV}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50"
               >
                 Export to CSV
               </button>
@@ -750,7 +762,7 @@ const DashboardPage: React.FC = () => {
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="glass">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit #</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Community</th>
@@ -809,6 +821,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
