@@ -81,8 +81,8 @@ body {
   }
 }
 
-/* Animation utilities */
-.animate-slide-up {
+/* Animation utilities - DISABLED to prevent layout shift */
+/* .animate-slide-up {
   animation: slideUp 0.5s ease-out forwards;
 }
 
@@ -92,7 +92,7 @@ body {
 
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
-}
+} */
 
 /* Gradient text utility */
 .gradient-text {

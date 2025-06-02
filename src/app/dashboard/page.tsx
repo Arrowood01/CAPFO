@@ -571,7 +571,7 @@ const DashboardPage: React.FC = () => {
                 <button
                   key={year}
                   onClick={() => setForecastRange(year)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${forecastRange === year ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md transform scale-105' : 'glass hover:shadow-md hover:transform hover:scale-105'}`}
+                  className={`px-4 py-2 text-sm font-medium rounded-md ${forecastRange === year ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md' : 'glass hover:shadow-md'}`}
                 >
                   {year} Year{year > 1 ? 's' : ''}
                 </button>
@@ -633,7 +633,7 @@ const DashboardPage: React.FC = () => {
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleRefreshForecast}
-            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? 'Refreshing...' : 'Refresh Forecast'}
@@ -643,15 +643,15 @@ const DashboardPage: React.FC = () => {
 
 
       {(loading || initialLoading) && (
-        <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
+        <div className="flex flex-col items-center justify-center py-20">
           <div className="relative">
             <div className="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
             <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-transparent border-r-transparent border-b-transparent border-l-blue-500 rounded-full animate-spin"></div>
           </div>
-          <p className="mt-4 text-lg text-gray-600 animate-pulse">Loading forecast data...</p>
+          <p className="mt-4 text-lg text-gray-600">Loading forecast data...</p>
         </div>
       )}
-      {error && <p className="text-red-600 glass border border-red-200 p-4 rounded-xl mb-4 animate-slide-up">{error}</p>}
+      {error && <p className="text-red-600 glass border border-red-200 p-4 rounded-xl mb-4">{error}</p>}
 
       {!initialLoading && !loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -725,14 +725,14 @@ const DashboardPage: React.FC = () => {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowAtRiskOnly(!showAtRiskOnly)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-200 ${showAtRiskOnly ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white' : 'glass hover:shadow-md'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md ${showAtRiskOnly ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white' : 'glass hover:shadow-md'}`}
               >
                 {showAtRiskOnly ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 <span className="text-sm font-medium">{showAtRiskOnly ? 'Showing At-Risk' : 'Show All'}</span>
               </button>
               <button
                 onClick={handleExportToCSV}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50"
               >
                 <Download className="w-4 h-4" />
                 <span>Export to CSV</span>
@@ -790,7 +790,7 @@ const DashboardPage: React.FC = () => {
                             {lifeUsed >= 0 && (
                               <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full transition-all duration-300 ${
+                                  className={`h-full ${
                                     lifeUsed >= 1 ? 'bg-gradient-to-r from-red-500 to-red-600' : 
                                     lifeUsed >= 0.75 ? 'bg-gradient-to-r from-yellow-500 to-orange-600' : 
                                     'bg-gradient-to-r from-green-500 to-emerald-600'
