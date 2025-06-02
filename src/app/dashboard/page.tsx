@@ -496,7 +496,7 @@ const DashboardPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
       <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         {/* Modern Header Section */}
-        <header className="animate-slide-up">
+        <header>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Capital Asset Forecast
           </h1>
@@ -529,28 +529,28 @@ const DashboardPage: React.FC = () => {
             value={forecastedAssets.length}
             icon={Package}
             gradient="from-blue-500 to-purple-600"
-            delay={0.15}
+            delay={0}
           />
           <StatCard
             title="Communities"
             value={allCommunities.length}
             icon={Building2}
             gradient="from-emerald-500 to-teal-600"
-            delay={0.2}
+            delay={0}
           />
           <StatCard
             title="Total Forecast Cost"
             value={`$${(forecastedAssets.reduce((sum, asset) => sum + asset.projected_cost, 0) / 1000).toFixed(1)}k`}
             icon={DollarSign}
             gradient="from-orange-500 to-red-600"
-            delay={0.25}
+            delay={0}
           />
           <StatCard
             title="Avg. Cost per Unit"
             value={`$${(forecastedAssets.reduce((sum, asset) => sum + asset.projected_cost, 0) / allCommunities.reduce((sum, c) => sum + (c.unit_count || 0), 0) / forecastRange).toFixed(0)}/yr`}
             icon={TrendingUp}
             gradient="from-purple-500 to-pink-600"
-            delay={0.3}
+            delay={0}
           />
         </div>
 
@@ -562,7 +562,7 @@ const DashboardPage: React.FC = () => {
       )}
 
       {/* Filters Section */}
-      <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+      <div className="glass rounded-xl shadow-lg p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Forecast Range</label>
@@ -656,13 +656,13 @@ const DashboardPage: React.FC = () => {
       {!initialLoading && !loading && !error && forecastedAssets.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Forecasted Costs by Year - Modern Chart */}
-          <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <div className="glass rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Forecasted Costs by Year</h2>
             <ModernForecastChart data={rechartsForecastByYearData} />
           </div>
 
           {/* Cost by Category - Progress Bars */}
-          <div className="glass rounded-xl shadow-lg p-6 min-h-[380px] flex flex-col animate-slide-up" style={{ animationDelay: '0.5s' }}>
+          <div className="glass rounded-xl shadow-lg p-6 min-h-[380px] flex flex-col">
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost by Category</h2>
             <div className="flex-1">
               <CategoryBreakdown 
@@ -673,7 +673,7 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* Cost Per Unit by Community - Horizontal Bar Chart */}
-          <div className="glass rounded-xl shadow-lg p-6 lg:col-span-2 min-h-[380px] flex flex-col animate-slide-up" style={{ animationDelay: '0.6s' }}>
+          <div className="glass rounded-xl shadow-lg p-6 lg:col-span-2 min-h-[380px] flex flex-col">
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Cost Per Unit by Community</h2>
             {rechartsCostPerUnitData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300 + rechartsCostPerUnitData.length * 20}>
@@ -708,7 +708,7 @@ const DashboardPage: React.FC = () => {
       )}
        {!initialLoading && !error && forecastedAssets.length === 0 && !selectedCategory && selectedCommunities.length === 0 && (
          <div className="text-center py-20">
-           <div className="glass rounded-xl shadow-lg p-8 max-w-md mx-auto animate-fade-in">
+           <div className="glass rounded-xl shadow-lg p-8 max-w-md mx-auto">
              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
              <h3 className="text-xl font-semibold text-gray-700 mb-2">Welcome to Capital Asset Forecast</h3>
              <p className="text-gray-600">Please select a community or category from the filters above to view your asset forecast.</p>
@@ -719,7 +719,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Table Section */}
       {!initialLoading && !loading && forecastedAssets.length > 0 && (
-        <div className="glass rounded-xl shadow-lg p-6 animate-slide-up" style={{ animationDelay: '0.7s' }}>
+        <div className="glass rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-700">Forecasted Assets</h2>
             <div className="flex items-center gap-4">

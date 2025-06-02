@@ -26,8 +26,8 @@ const StatCard: React.FC<StatCardProps> = ({
 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={delay > 0 ? { opacity: 0, y: 20 } : false}
+      animate={delay > 0 ? { opacity: 1, y: 0 } : false}
       transition={{ duration: 0.5, delay }}
       whileHover={{ y: -4 }}
       className="group relative overflow-hidden"

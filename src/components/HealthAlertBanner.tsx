@@ -27,10 +27,7 @@ const HealthAlertBanner: React.FC<HealthAlertBannerProps> = ({
 
   if (!hasIssues) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+      <div
         className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-500 rounded-xl p-6 text-white shadow-xl"
       >
         <div className="flex items-center space-x-3">
@@ -44,35 +41,27 @@ const HealthAlertBanner: React.FC<HealthAlertBannerProps> = ({
             <p className="text-emerald-100">Your forecast looks great! No immediate concerns detected.</p>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+    <div
       className="bg-gradient-to-r from-red-500 via-orange-500 to-red-600 rounded-xl p-6 text-white shadow-xl"
     >
       <div className="flex items-start space-x-4">
-        <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 2 }}
+        <div
           className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0"
         >
           <AlertTriangle className="w-6 h-6" />
-        </motion.div>
+        </div>
         
         <div className="flex-1">
           <h3 className="text-xl font-semibold mb-4">Attention Required</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Overdue Assets Card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
+            <div
               className="bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10"
             >
               <div className="flex items-center justify-between mb-2">
@@ -81,14 +70,11 @@ const HealthAlertBanner: React.FC<HealthAlertBannerProps> = ({
               </div>
               <div className="text-2xl font-bold">{overdueAssetsCount}</div>
               <p className="text-xs text-red-100 mt-1">Need immediate attention</p>
-            </motion.div>
+            </div>
 
             {/* Reserve Balance Card */}
             {isYebBelowTarget && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
+              <div
                 className="bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -97,15 +83,12 @@ const HealthAlertBanner: React.FC<HealthAlertBannerProps> = ({
                 </div>
                 <div className="text-2xl font-bold">${(finalReserveBalance / 1000).toFixed(1)}k</div>
                 <p className="text-xs text-orange-100 mt-1">Below target threshold</p>
-              </motion.div>
+              </div>
             )}
 
             {/* Funding Gap Card */}
             {isUnderfunded && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
+              <div
                 className="bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -114,25 +97,22 @@ const HealthAlertBanner: React.FC<HealthAlertBannerProps> = ({
                 </div>
                 <div className="text-2xl font-bold">${((totalExpenses - totalDeposits) / 1000).toFixed(1)}k</div>
                 <p className="text-xs text-yellow-100 mt-1">Additional funding needed</p>
-              </motion.div>
+              </div>
             )}
           </div>
 
           {suggestedMonthlyDeposit > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
+            <div
               className="mt-4 pt-4 border-t border-white/20"
             >
               <p className="text-sm">
                 Suggested monthly deposit: <span className="font-bold text-lg">${suggestedMonthlyDeposit.toFixed(2)}</span> per unit
               </p>
-            </motion.div>
+            </div>
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

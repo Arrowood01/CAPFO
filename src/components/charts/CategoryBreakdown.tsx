@@ -44,9 +44,8 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data, totalAssets
         return (
           <motion.div
             key={category.name}
-            initial={{ opacity: 0, x: -20 }}
+            initial={false}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
             className="group cursor-pointer"
           >
             <div className="flex items-center justify-between mb-2">
@@ -72,11 +71,10 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data, totalAssets
               {/* Progress bar */}
               <motion.div
                 className={`absolute top-0 left-0 h-full bg-gradient-to-r ${gradient} rounded-full`}
-                initial={{ width: 0 }}
+                initial={false}
                 animate={{ width: `${percentage}%` }}
                 transition={{ 
-                  duration: 1, 
-                  delay: index * 0.1,
+                  duration: 0.5,
                   ease: "easeOut" 
                 }}
               >

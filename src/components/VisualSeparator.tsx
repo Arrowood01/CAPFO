@@ -21,10 +21,7 @@ const VisualSeparator: React.FC<VisualSeparatorProps> = ({
     : 'w-1 h-full';
 
   return (
-    <motion.div
-      initial={animate ? { opacity: 0, scale: orientation === 'horizontal' ? { x: 0 } : { y: 0 } } : undefined}
-      animate={animate ? { opacity: 1, scale: 1 } : undefined}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+    <div
       className={`${baseClasses} bg-gradient-to-r ${gradient} rounded-full ${className}`}
     />
   );

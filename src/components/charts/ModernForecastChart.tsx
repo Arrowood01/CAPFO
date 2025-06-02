@@ -114,24 +114,19 @@ const ModernForecastChart: React.FC<ModernForecastChartProps> = ({ data, height 
           })}
 
           {/* Area fill */}
-          <motion.path
+          <path
             d={areaData}
             fill="url(#areaGradient)"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            opacity="1"
           />
 
           {/* Main line */}
-          <motion.path
+          <path
             d={pathData}
             fill="none"
             stroke="url(#lineGradient)"
             strokeWidth="3"
             filter="url(#glow)"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
           />
 
           {/* Data points */}
@@ -156,17 +151,17 @@ const ModernForecastChart: React.FC<ModernForecastChartProps> = ({ data, height 
                 />
 
                 {/* Point */}
-                <motion.circle
+                <circle
                   cx={x}
                   cy={y}
                   r={isHovered ? 8 : 5}
                   fill={isHighCost ? '#ef4444' : '#3b82f6'}
                   stroke="white"
                   strokeWidth="2"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  style={{ filter: isHovered ? 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' : 'none' }}
+                  style={{ 
+                    filter: isHovered ? 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
                 />
 
                 {/* Tooltip */}
