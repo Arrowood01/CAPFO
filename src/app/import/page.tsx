@@ -50,6 +50,8 @@ const ImportPage = () => {
       'Purchase Price': 'purchase_price',
       'Category': 'category_name',
       'Install Date': 'install_date',
+      'Prior Replace': 'prior_replace',
+      'Notes': 'notes',
     };
 
     const processedData = data.map((row, rowIndex) => {
@@ -79,7 +81,7 @@ const ImportPage = () => {
             const numValue = parseFloat(String(cellValue).replace(/[^0-9.-]+/g, ""));
             cellValue = isNaN(numValue) ? String(cellValue) : numValue;
             processingNotes = ` (parsed as number: ${cellValue})`;
-          } else if (internalFieldName === 'install_date') {
+          } else if (internalFieldName === 'install_date' || internalFieldName === 'prior_replace') {
             if (typeof cellValue === 'number') {
               const excelEpoch = new Date(1899, 11, 30);
               const dateObj = new Date(excelEpoch.getTime() + cellValue * 24 * 60 * 60 * 1000);
@@ -100,7 +102,7 @@ const ImportPage = () => {
                 cellValue = String(rawValueFromCell);
               }
             }
-          } else if (internalFieldName === 'category_name') {
+          } else if (internalFieldName === 'category_name' || internalFieldName === 'notes') {
             cellValue = String(cellValue);
             processingNotes = ` (ensured as string)`;
           }
@@ -278,6 +280,8 @@ const ImportPage = () => {
         community_id: selectedCommunityId,
         category_id: categoryId,
         install_date: assetData.install_date || null, // Add install_date, ensure it's null if not present
+        prior_replace: assetData.prior_replace || null, // Add prior_replace, ensure it's null if not present
+        notes: assetData.notes || null, // Add notes, ensure it's null if not present
         created_at: new Date().toISOString(),
       });
     }
