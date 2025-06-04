@@ -1,5 +1,8 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Capital Asset Forecasting Tool
+A comprehensive asset management and forecasting application.
+
 ## Getting Started
 
 First, run the development server:
