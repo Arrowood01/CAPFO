@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'; // To highlight active link
 const navLinks = [
   { name: 'Dashboard', href: '/dashboard' },
   { name: 'Import', href: '/import' },
+  { name: 'Communities', href: '/communities' },
   { name: 'Settings', href: '/settings' },
 ];
 
