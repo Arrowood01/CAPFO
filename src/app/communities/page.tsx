@@ -1,23 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Community {
-  id: number;
+  id: string;
   name: string;
-  units: number;
-  monthlyDeposit: number;
-  balance: number;
+  unit_count: number | null;
+  monthly_deposit: number | null;
+  current_balance: number | null;
 }
 
 const CommunitiesManagement: React.FC = () => {
-  // Sample data
-  const [communities, setCommunities] = useState<Community[]>([
-    { id: 1, name: 'Presbyterian Homes Main', units: 209, monthlyDeposit: 35243, balance: 2327915 },
-    { id: 2, name: 'Community North', units: 150, monthlyDeposit: 25000, balance: 1500000 },
-    { id: 3, name: 'Community South', units: 180, monthlyDeposit: 30000, balance: 1800000 }
-  ]);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [showModal, setShowModal] = useState(false);
   const [editingCommunity, setEditingCommunity] = useState<Community | null>(null);
@@ -27,12 +25,39 @@ const CommunitiesManagement: React.FC = () => {
     monthlyDeposit: '',
     balance: ''
   });
+  const [saving, setSaving] = useState(false);
 
-  const calculatePerUnitMonth = (monthlyDeposit: number, units: number): number => {
-    return units > 0 ? monthlyDeposit / units : 0;
+  // Fetch communities from Supabase
+  const fetchCommunities = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('communities')
+        .select('id, name, unit_count, monthly_deposit, current_balance')
+        .order('name');
+
+      if (error) throw error;
+      setCommunities(data || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching communities:', err);
+      setError('Failed to load communities');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCommunities();
+  }, [fetchCommunities]);
+
+  const calculatePerUnitMonth = (monthlyDeposit: number | null, units: number | null): number => {
+    if (!monthlyDeposit || !units || units <= 0) return 0;
+    return monthlyDeposit / units;
   };
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amount: number | null): string => {
+    if (amount === null || amount === undefined) return '$0';
     return `$${amount.toLocaleString()}`;
   };
 
@@ -46,9 +71,9 @@ const CommunitiesManagement: React.FC = () => {
     setEditingCommunity(community);
     setFormData({
       name: community.name,
-      units: community.units.toString(),
-      monthlyDeposit: community.monthlyDeposit.toString(),
-      balance: community.balance.toString()
+      units: community.unit_count?.toString() || '',
+      monthlyDeposit: community.monthly_deposit?.toString() || '',
+      balance: community.current_balance?.toString() || ''
     });
     setShowModal(true);
   };
@@ -64,7 +89,7 @@ const CommunitiesManagement: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate form
     if (!formData.name.trim()) {
       alert('Community name is required');
@@ -90,33 +115,92 @@ const CommunitiesManagement: React.FC = () => {
       return;
     }
 
-    const communityData: Community = {
-      id: editingCommunity ? editingCommunity.id : Math.max(...communities.map(c => c.id)) + 1,
-      name: formData.name.trim(),
-      units,
-      monthlyDeposit,
-      balance
-    };
+    setSaving(true);
+    try {
+      const communityData = {
+        name: formData.name.trim(),
+        unit_count: units,
+        monthly_deposit: monthlyDeposit,
+        current_balance: balance
+      };
 
-    if (editingCommunity) {
-      // Update existing community
-      setCommunities(prev => 
-        prev.map(c => c.id === editingCommunity.id ? communityData : c)
-      );
-    } else {
-      // Add new community
-      setCommunities(prev => [...prev, communityData]);
+      if (editingCommunity) {
+        // Update existing community
+        const { error } = await supabase
+          .from('communities')
+          .update(communityData)
+          .eq('id', editingCommunity.id);
+
+        if (error) throw error;
+      } else {
+        // Add new community
+        const { error } = await supabase
+          .from('communities')
+          .insert([communityData]);
+
+        if (error) throw error;
+      }
+
+      // Refresh the communities list
+      await fetchCommunities();
+      closeModal();
+    } catch (err) {
+      console.error('Error saving community:', err);
+      alert('Failed to save community. Please try again.');
+    } finally {
+      setSaving(false);
     }
-
-    closeModal();
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: string) => {
     const community = communities.find(c => c.id === id);
     if (community && window.confirm(`Are you sure you want to delete "${community.name}"?`)) {
-      setCommunities(prev => prev.filter(c => c.id !== id));
+      try {
+        const { error } = await supabase
+          .from('communities')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        
+        // Refresh the communities list
+        await fetchCommunities();
+      } catch (err) {
+        console.error('Error deleting community:', err);
+        alert('Failed to delete community. Please try again.');
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg text-gray-600">Loading communities...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p>{error}</p>
+            <button 
+              onClick={fetchCommunities}
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -134,52 +218,64 @@ const CommunitiesManagement: React.FC = () => {
         </div>
 
         {/* Communities Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {communities.map((community) => (
-            <div key={community.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6">
-              {/* Card Header */}
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-semibold text-gray-900">{community.name}</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEditModal(community)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(community.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+        {communities.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg mb-4">No communities found</div>
+            <button
+              onClick={openAddModal}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Add Your First Community
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {communities.map((community) => (
+              <div key={community.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6">
+                {/* Card Header */}
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">{community.name}</h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEditModal(community)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(community.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Card Content */}
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Number of units:</span>
-                  <span className="font-medium">{community.units}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Monthly deposit:</span>
-                  <span className="font-medium">{formatCurrency(community.monthlyDeposit)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Current balance:</span>
-                  <span className="font-medium">{formatCurrency(community.balance)}</span>
-                </div>
-                <div className="flex justify-between border-t pt-3">
-                  <span className="text-gray-600">Per unit/month:</span>
-                  <span className="font-semibold text-blue-600">
-                    {formatCurrency(calculatePerUnitMonth(community.monthlyDeposit, community.units))}
-                  </span>
+                {/* Card Content */}
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Number of units:</span>
+                    <span className="font-medium">{community.unit_count || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Monthly deposit:</span>
+                    <span className="font-medium">{formatCurrency(community.monthly_deposit)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Current balance:</span>
+                    <span className="font-medium">{formatCurrency(community.current_balance)}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-3">
+                    <span className="text-gray-600">Per unit/month:</span>
+                    <span className="font-semibold text-blue-600">
+                      {formatCurrency(calculatePerUnitMonth(community.monthly_deposit, community.unit_count))}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Modal */}
         {showModal && (
@@ -271,9 +367,10 @@ const CommunitiesManagement: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={saving}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
                 >
-                  {editingCommunity ? 'Update' : 'Save'}
+                  {saving ? 'Saving...' : (editingCommunity ? 'Update' : 'Save')}
                 </button>
               </div>
             </div>
