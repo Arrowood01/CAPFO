@@ -438,8 +438,8 @@ const DashboardPage: React.FC = () => {
           prior_replace: data.prior_replace,
           notes: data.notes,
           description: data.description,
-          category_name: (data.categories as any)?.name,
-          community_name: (data.communities as any)?.name,
+          category_name: (data.categories as { name: string } | null)?.name,
+          community_name: (data.communities as { name: string } | null)?.name,
         };
         
         setSelectedAsset(assetDetails);
