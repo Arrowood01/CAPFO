@@ -9,6 +9,7 @@ import { Building2, Package, TrendingUp, DollarSign, Eye, EyeOff, Download } fro
 import ModernForecastChart from '@/components/charts/ModernForecastChart';
 import CategoryBreakdown from '@/components/charts/CategoryBreakdown';
 import VisualSeparator from '@/components/VisualSeparator';
+import AssetDetailsModal from '@/components/AssetDetailsModal';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
 } from 'recharts';
@@ -46,6 +47,21 @@ interface ForecastedAsset extends DashboardAsset {
   projected_cost: number;
   isOverdue?: boolean;
   lifespan?: number | null;
+}
+
+interface AssetDetails {
+  id: string;
+  make?: string;
+  model?: string;
+  serial_number?: string;
+  unit_number?: string;
+  install_date?: string;
+  purchase_price?: number;
+  prior_replace?: string;
+  notes?: string;
+  description?: string;
+  category_name?: string;
+  community_name?: string;
 }
 
 interface Community {
@@ -89,6 +105,11 @@ const DashboardPage: React.FC = () => {
   const [activeForecastYears, setActiveForecastYears] = useState<number>(forecastRange);
   const [activeAnnualDeposit, setActiveAnnualDeposit] = useState<number>(defaultGlobalAnnualDeposit);
   const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
+
+  // Asset details modal state
+  const [selectedAsset, setSelectedAsset] = useState<AssetDetails | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadingAssetDetails, setLoadingAssetDetails] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -380,6 +401,63 @@ const DashboardPage: React.FC = () => {
       link.click();
       document.body.removeChild(link);
     }
+  };
+
+  // Fetch detailed asset information for the modal
+  const handleAssetClick = async (assetId: string) => {
+    setLoadingAssetDetails(true);
+    try {
+      const { data, error } = await supabase
+        .from('assets')
+        .select(`
+          id,
+          make,
+          model,
+          serial_number,
+          unit_number,
+          install_date,
+          purchase_price,
+          prior_replace,
+          notes,
+          description,
+          categories (name),
+          communities (name)
+        `)
+        .eq('id', assetId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const assetDetails: AssetDetails = {
+          id: data.id,
+          make: data.make,
+          model: data.model,
+          serial_number: data.serial_number,
+          unit_number: data.unit_number,
+          install_date: data.install_date,
+          purchase_price: data.purchase_price,
+          prior_replace: data.prior_replace,
+          notes: data.notes,
+          description: data.description,
+          category_name: data.categories?.name,
+          community_name: data.communities?.name,
+        };
+        
+        setSelectedAsset(assetDetails);
+        setIsModalOpen(true);
+      }
+    } catch (err) {
+      console.error('Error fetching asset details:', err);
+      // You could show a toast or error message here
+    } finally {
+      setLoadingAssetDetails(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedAsset(null);
   };
 
   // --- Recharts Data Transformation Functions ---
@@ -777,7 +855,11 @@ const DashboardPage: React.FC = () => {
                     const urgencyLevel = lifeUsed >= 1 ? 100 : lifeUsed >= 0.75 ? Math.round((lifeUsed - 0.75) * 400) : 0;
 
                     return (
-                      <tr key={asset.id} className={`${rowClass} hover:bg-blue-50/50 transition-colors duration-150`}>
+                      <tr 
+                        key={asset.id} 
+                        className={`${rowClass} hover:bg-blue-50/50 transition-colors duration-150 cursor-pointer`}
+                        onClick={() => handleAssetClick(asset.id)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.unit_number || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.communities?.name || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.categories?.name || 'N/A'}</td>
@@ -817,6 +899,13 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Asset Details Modal */}
+      <AssetDetailsModal
+        asset={selectedAsset}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };
