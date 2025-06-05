@@ -109,7 +109,6 @@ const DashboardPage: React.FC = () => {
   // Asset details modal state
   const [selectedAsset, setSelectedAsset] = useState<AssetDetails | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loadingAssetDetails, setLoadingAssetDetails] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -405,7 +404,6 @@ const DashboardPage: React.FC = () => {
 
   // Fetch detailed asset information for the modal
   const handleAssetClick = async (assetId: string) => {
-    setLoadingAssetDetails(true);
     try {
       const { data, error } = await supabase
         .from('assets')
@@ -450,8 +448,6 @@ const DashboardPage: React.FC = () => {
     } catch (err) {
       console.error('Error fetching asset details:', err);
       // You could show a toast or error message here
-    } finally {
-      setLoadingAssetDetails(false);
     }
   };
 
